@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#102d69" />
+    <meta name="description" content="A welcoming student workspace for school records, class groups and academic reports." />
+    <title>Campusly — Student Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <input class="state-control" type="checkbox" id="portal-toggle" aria-label="Open student portal" />
+      <input class="state-control" type="radio" name="page" id="page-overview" checked />
+      <input class="state-control" type="radio" name="page" id="page-add" />
+      <input class="state-control" type="radio" name="page" id="page-groups" />
+      <input class="state-control" type="radio" name="page" id="page-ungrouped" />
+      <input class="state-control" type="radio" name="page" id="page-reports" />
+      <input class="state-control" type="radio" name="page" id="page-directory" />
+      <input class="state-control" type="radio" name="page" id="page-attendance" />
+      <input class="state-control" type="radio" name="page" id="page-marks" />
+      <input class="state-control" type="radio" name="report-class" id="report-10" value="10th" checked />
+      <input class="state-control" type="radio" name="report-class" id="report-11" value="11th" />
+      <input class="state-control" type="radio" name="report-class" id="report-12" value="12th" />
+      <input class="state-control" type="checkbox" id="mobile-nav-toggle" />
+
+      <main class="login-screen">
+        <section class="login-story" aria-label="Welcome to Campusly">
+          <a class="brand brand-light" href="#welcome" aria-label="Campusly home"><span class="brand-mark">C</span><span>campusly</span></a>
+          <div class="story-copy">
+            <span class="eyebrow">YOUR SCHOOL, IN SYNC</span>
+            <h1>Every student’s<br />journey, <span>in one place.</span></h1>
+            <p>A simpler way to manage student records, organize your class groups, and follow academic progress.</p>
+          </div>
+          <div class="story-art" aria-hidden="true">
+            <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+            <div class="art-card art-card-main">
+              <div class="art-card-top"><span class="art-dot"></span><span>STUDENT OVERVIEW</span><span class="art-more">···</span></div>
+              <div class="art-profile"><span class="art-avatar">A</span><span><b>Academic progress</b><small>Class 10 · 2026–27</small></span><span class="art-score">92%</span></div>
+              <div class="art-chart"><i style="height:35%"></i><i style="height:50%"></i><i style="height:42%"></i><i style="height:70%"></i><i style="height:58%"></i><i style="height:82%"></i><i style="height:68%"></i><i style="height:100%"></i></div>
+              <div class="art-chart-labels"><span>JUL</span><span>AUG</span><span>SEP</span><span>OCT</span></div>
+            </div>
+            <div class="art-card art-card-float"><span class="float-icon">✓</span><span><b>Class organized</b><small>Looking good!</small></span></div>
+            <div class="art-sparkle sparkle-one">✳</div><div class="art-sparkle sparkle-two">✦</div>
+          </div>
+          <div class="story-foot"><span>Made for the people who make learning happen.</span><span>01 — 03</span></div>
+        </section>
+        <section class="login-panel">
+          <div class="login-top"><span class="mobile-brand"><span class="brand-mark">C</span> campusly</span><span>Need help? <a href="mailto:support@campusly.edu">Contact support</a></span></div>
+          <div class="login-card">
+            <div class="login-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/></svg></div>
+            <span class="eyebrow login-eyebrow">STUDENT PORTAL</span>
+            <h2>Welcome back</h2>
+            <p class="login-intro">Sign in to continue to your student workspace.</p>
+            <form id="login-form">
+              <label for="login-email">Username or email</label>
+              <input id="login-email" name="email" type="email" placeholder="e.g. alex@school.edu" autocomplete="username" required />
+              <div class="password-label"><label for="login-password">Password</label><a class="text-button" href="mailto:support@campusly.edu?subject=Password%20reset">Forgot password?</a></div>
+              <input id="login-password" name="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+              <label class="remember-row"><input type="checkbox" checked /><span>Keep me signed in</span></label>
+              <button class="primary-button login-submit" type="submit">Sign in <span aria-hidden="true">→</span></button>
+              <p class="login-note">Demo sign-in · Enter any email and password to explore.</p>
+            </form>
+          </div>
+          <div class="login-bottom"><span>© 2026 Campusly</span><span><a href="mailto:support@campusly.edu?subject=Privacy">Privacy</a><a href="mailto:support@campusly.edu?subject=Terms">Terms</a></span></div>
+        </section>
+      </main>
+
+      <main class="portal" id="student-workspace">
+        <aside class="sidebar">
+          <a class="brand brand-light sidebar-brand" href="#student-workspace" aria-label="Campusly dashboard"><span class="brand-mark">C</span><span>campusly</span></a>
+          <div class="school-switcher"><span class="school-avatar">N</span><span class="school-label"><b>Northview Academy</b><small>School workspace</small></span><span class="switch-chevron">⌄</span></div>
+          <div class="nav-label">WORKSPACE</div>
+          <nav class="main-nav" aria-label="Main navigation">
+            <label class="nav-item nav-overview" for="page-overview"><span class="nav-icon">⌂</span>Overview</label>
+            <div class="nav-section-title">STUDENT DETAILS</div>
+            <label class="nav-item nav-directory" for="page-directory"><span class="nav-icon">☷</span>All students</label>
+            <label class="nav-item nav-add" for="page-add"><span class="nav-icon">＋</span>Add student</label>
+            <label class="nav-item nav-groups" for="page-groups"><span class="nav-icon">▦</span>Group students</label>
+            <label class="nav-item nav-ungrouped" for="page-ungrouped"><span class="nav-icon">☷</span>Ungrouped students<span class="nav-count" id="ungrouped-nav-count">4</span></label>
+            <div class="nav-section-title reports-nav-title">ACADEMICS</div>
+            <label class="nav-item nav-attendance" for="page-attendance"><span class="nav-icon">✓</span>Daily attendance</label>
+            <label class="nav-item nav-marks" for="page-marks"><span class="nav-icon">％</span>Marks &amp; exams</label>
+            <label class="nav-item nav-reports" for="page-reports"><span class="nav-icon">▤</span>Student reports</label>
+          </nav>
+          <div class="sidebar-bottom">
+            <div class="help-card"><span class="help-icon">?</span><b>Need a hand?</b><small>Visit the help center</small><a href="mailto:support@campusly.edu">Get support <span>↗</span></a></div>
+            <label class="profile-button" for="portal-toggle"><span class="profile-avatar" id="profile-avatar">S</span><span><b id="profile-name">School Admin</b><small>Administrator · Sign out</small></span><span class="profile-more">↗</span></label>
+          </div>
+        </aside>
+        <label class="sidebar-scrim" for="mobile-nav-toggle" aria-label="Close navigation"></label>
+        <section class="portal-main">
+          <header class="topbar">
+            <label class="mobile-menu" for="mobile-nav-toggle" aria-label="Open navigation">☰</label>
+            <div class="breadcrumbs"><span>Workspace</span><span class="crumb-divider">/</span><b class="crumb-overview">Overview</b><b class="crumb-add">Add student</b><b class="crumb-groups">Group students</b><b class="crumb-ungrouped">Ungrouped students</b><b class="crumb-reports">Student reports</b><b class="crumb-directory">All students</b><b class="crumb-attendance">Daily attendance</b><b class="crumb-marks">Marks &amp; exams</b></div>
+            <div class="topbar-right"><span class="today-label">ACADEMIC YEAR 2026–27</span><span class="icon-button notification-button" aria-label="Notifications">♧<i></i></span><span class="topbar-avatar" id="topbar-avatar">S</span></div>
+          </header>
+          <div class="page-content">
+            <section class="view-section view-overview">
+              <div class="page-heading heading-with-action"><div><div class="eyebrow">YOUR SCHOOL OVERVIEW</div><h1><span id="greeting-text">Good morning</span>, <span id="welcome-name">there</span> <span class="wave">✳</span></h1><p>Here’s what’s happening with your students today.</p></div><label class="primary-button" for="page-add"><span>＋</span> Add student</label></div>
+              <div class="stats-grid">
+                <article class="stat-card"><div class="stat-top"><span>Total students</span><span class="stat-icon students-icon">♧</span></div><div class="stat-number" id="dashboard-total">0</div><div class="stat-foot"><span class="stat-change">↑ Enrolled students</span><span>↗</span></div></article>
+                <article class="stat-card"><div class="stat-top"><span>Grouped students</span><span class="stat-icon groups-icon">▦</span></div><div class="stat-number" id="dashboard-grouped">0</div><div class="stat-foot"><span>Assigned to a class</span><span>↗</span></div></article>
+                <article class="stat-card"><div class="stat-top"><span>Today's attendance</span><span class="stat-icon groups-icon">✓</span></div><div class="stat-number" id="dashboard-attendance">—</div><div class="stat-foot"><span>Present / enrolled today</span><label class="inline-link" for="page-attendance">Take attendance ↗</label></div></article>
+                <article class="stat-card"><div class="stat-top"><span>Average marks</span><span class="stat-icon reports-icon">％</span></div><div class="stat-number" id="dashboard-average">—</div><div class="stat-foot"><span>Across recorded exams</span><label class="inline-link" for="page-reports">View reports ↗</label></div></article>
+              </div>
+              <div class="overview-grid">
+                <article class="content-card recent-card"><div class="card-heading"><div><h2>Recently added students</h2><p>Your latest student records</p></div><label class="inline-link" for="page-ungrouped">View all <span>→</span></label></div>
+                  <div class="recent-list" id="recent-students"></div>
+                </article>
+                <article class="content-card report-shortcut"><div class="card-heading"><div><h2>Student reports</h2><p>Explore academic reports by class</p></div><span class="small-chart-icon">↗</span></div><div class="report-shortcut-list">
+                  <label for="page-reports" class="report-shortcut-row" data-report-class="10th"><span class="grade-icon grade-ten">10</span><span><b>10th class</b><small>Board examination results</small></span><span class="arrow">→</span></label>
+                  <label for="page-reports" class="report-shortcut-row" data-report-class="11th"><span class="grade-icon grade-eleven">11</span><span><b>11th class</b><small>Yearly academic progress</small></span><span class="arrow">→</span></label>
+                  <label for="page-reports" class="report-shortcut-row" data-report-class="12th"><span class="grade-icon grade-twelve">12</span><span><b>12th class</b><small>Board examination results</small></span><span class="arrow">→</span></label>
+                </div></article>
+              </div>
+              <div class="welcome-banner"><div><span class="banner-label">YOUR STUDENT SUCCESS, AT A GLANCE</span><h2>Make every school day count.<br />Track progress, one student at a time.</h2><p>Record attendance, marks and class groups in one organized workspace.</p><label class="banner-button" for="page-attendance">Take today's attendance <span>→</span></label></div><div class="banner-art" aria-hidden="true"><span class="banner-circle circle-back"></span><span class="banner-circle circle-front"><i>✳</i></span><span class="banner-star">✦</span><span class="banner-line"></span></div></div>
+            </section>
+
+            <section class="view-section view-add">
+              <div class="page-heading"><div><div class="eyebrow">STUDENT DETAILS</div><h1>Add a student</h1><p>Create a student record for your school directory.</p></div></div>
+              <div class="form-layout">
+                <form class="content-card student-form" id="student-form">
+                  <div class="form-section-heading"><span class="form-step">01</span><div><h2>Student information</h2><p>Enter the student's basic details.</p></div></div>
+                  <div class="form-grid">
+                    <div class="form-field"><label for="student-name">Full name <span>*</span></label><input id="student-name" placeholder="e.g. Aarav Sharma" required /></div>
+                    <div class="form-field"><label for="student-id">Student ID <span>*</span></label><input id="student-id" placeholder="e.g. STU-1024" required /></div>
+                    <div class="form-field"><label for="student-email">Email address</label><input id="student-email" type="email" placeholder="student@school.edu" /></div>
+                    <div class="form-field"><label for="student-phone">Phone number</label><input id="student-phone" type="tel" placeholder="+91 98765 43210" /></div>
+                    <div class="form-field"><label for="student-dob">Date of birth</label><input id="student-dob" type="date" /></div>
+                    <div class="form-field"><label for="student-guardian">Parent / guardian</label><input id="student-guardian" placeholder="Guardian name" /></div>
+                    <div class="form-field"><label for="student-class">Class</label><select id="student-class"><option value="">Choose a class</option><option>10th</option><option>11th</option><option>12th</option></select></div>
+                    <div class="form-field"><label for="student-section">Section</label><select id="student-section"><option value="">Choose a section</option><option>A</option><option>B</option><option>C</option></select></div>
+                  </div>
+                  <div class="demo-note">Student details are saved in this browser on this device. Export a backup regularly.</div>
+                  <div class="form-actions"><button type="reset" class="secondary-button">Clear form</button><button type="submit" class="primary-button">Save student <span>→</span></button></div>
+                </form>
+                <aside class="form-aside"><div class="content-card tip-card"><span class="tip-icon">✦</span><h3>A little organization goes a long way.</h3><p>Add a class and section now, or leave them blank and group the student later.</p></div><div class="form-help"><span>Need help adding students?</span><a href="mailto:support@campusly.edu">Contact your school admin ↗</a></div></aside>
+              </div>
+            </section>
+
+            <section class="view-section view-groups">
+              <div class="page-heading heading-with-action"><div><div class="eyebrow">STUDENT DETAILS</div><h1>Group students</h1><p>Assign ungrouped students to a class and section.</p></div><span class="selection-count" id="group-count">0 ungrouped</span></div>
+              <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Ready to be grouped</h2><p>Select students and choose their class below.</p></div><span class="demo-tag">SAVED ON THIS DEVICE</span></div>
+                <div class="table-scroll"><table><thead><tr><th><input type="checkbox" id="group-select-all" aria-label="Select all students" /></th><th>STUDENT</th><th>STUDENT ID</th><th>EMAIL</th><th>ADDED</th></tr></thead><tbody id="group-table-body"></tbody></table></div>
+                <div class="group-actions"><span>Choose a class and section for the selected students.</span><div><select id="group-class"><option value="">Choose class</option><option>10th</option><option>11th</option><option>12th</option></select><select id="group-section"><option value="">Section</option><option>A</option><option>B</option><option>C</option></select><button class="primary-button" id="assign-group" type="button">Assign selected</button></div></div>
+              </div>
+            </section>
+
+            <section class="view-section view-ungrouped">
+              <div class="page-heading heading-with-action"><div><div class="eyebrow">STUDENT DETAILS</div><h1>Ungrouped students</h1><p>Students who haven't been assigned to a class yet.</p></div><label class="primary-button" for="page-add"><span>＋</span> Add student</label></div>
+              <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Ungrouped students <span class="count-pill" id="ungrouped-total">0</span></h2><p>Students to assign to a class group.</p></div><label class="search-box"><span>⌕</span><input id="ungrouped-search" placeholder="Search students..." aria-label="Search ungrouped students" /></label></div>
+                <div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>EMAIL</th><th>ADDED</th><th>ACTION</th></tr></thead><tbody id="ungrouped-table-body"></tbody></table></div>
+                <div class="table-footer" id="ungrouped-footer"></div>
+              </div>
+            </section>
+
+            <section class="view-section view-directory">
+              <div class="page-heading heading-with-action"><div><div class="eyebrow">STUDENT DETAILS</div><h1>All students</h1><p>View the full school roster, grouped by class and section.</p></div><label class="primary-button" for="page-add">＋ Add student</label></div>
+              <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Student roster <span class="count-pill" id="directory-total">0</span></h2><p>Search or filter enrolled students.</p></div><div class="table-controls"><label class="search-box"><span>⌕</span><input id="directory-search" placeholder="Search students..." aria-label="Search all students" /></label><select id="directory-class" aria-label="Filter by class"><option value="">All classes</option><option>10th</option><option>11th</option><option>12th</option></select><select id="directory-section" aria-label="Filter by section"><option value="">All sections</option><option>A</option><option>B</option><option>C</option></select><button class="secondary-button" id="export-students" type="button">Export CSV</button></div></div>
+                <div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>CLASS</th><th>SECTION</th><th>GUARDIAN</th><th>EMAIL</th><th>ATTENDANCE</th><th>AVERAGE</th><th>ACTION</th></tr></thead><tbody id="directory-table-body"></tbody></table></div>
+                <div class="table-footer" id="directory-footer"></div>
+              </div>
+            </section>
+
+            <section class="view-section view-attendance">
+              <div class="page-heading"><div><div class="eyebrow">ACADEMICS · DAILY REGISTER</div><h1>Attendance</h1><p>Mark and review attendance by date, class and section.</p></div></div>
+              <div class="content-card attendance-controls">
+                <div class="form-field"><label for="attendance-date">Attendance date</label><input id="attendance-date" type="date" /></div>
+                <div class="form-field"><label for="attendance-class">Class</label><select id="attendance-class"><option value="">All classes</option><option>10th</option><option>11th</option><option>12th</option></select></div>
+                <div class="form-field"><label for="attendance-section">Section</label><select id="attendance-section"><option value="">All sections</option><option>A</option><option>B</option><option>C</option></select></div>
+                <div class="attendance-summary"><span id="attendance-summary">0 students</span><span id="attendance-completion">Not saved</span></div>
+              </div>
+              <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Class register</h2><p>Choose present, absent or late for each student.</p></div><div><button class="secondary-button" id="mark-all-present" type="button">Mark all present</button> <button class="primary-button" id="save-attendance" type="button">Save attendance</button></div></div>
+                <div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>CLASS</th><th>SECTION</th><th>STATUS</th></tr></thead><tbody id="attendance-table-body"></tbody></table></div>
+              </div>
+            </section>
+
+            <section class="view-section view-marks">
+              <div class="page-heading"><div><div class="eyebrow">ACADEMICS · ASSESSMENTS</div><h1>Marks &amp; exams</h1><p>Record subject marks and follow academic performance over time.</p></div></div>
+              <form class="content-card marks-form" id="marks-form">
+                <div class="marks-form-fields">
+                  <div class="form-field"><label for="exam-name">Exam name</label><input id="exam-name" placeholder="e.g. Unit test 1" required /></div>
+                  <div class="form-field"><label for="exam-subject">Subject</label><input id="exam-subject" placeholder="e.g. Mathematics" required /></div>
+                  <div class="form-field"><label for="exam-max">Maximum marks</label><input id="exam-max" type="number" min="1" step="0.5" value="100" required /></div>
+                  <div class="form-field"><label for="exam-class">Class</label><select id="exam-class" required><option value="">Choose class</option><option>10th</option><option>11th</option><option>12th</option></select></div>
+                  <div class="form-field"><label for="exam-section">Section</label><select id="exam-section"><option value="">All sections</option><option>A</option><option>B</option><option>C</option></select></div>
+                </div>
+                <p class="marks-hint">Select the class and enter a score for each student. Saved scores appear in reports.</p>
+                <div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>SECTION</th><th>SCORE</th></tr></thead><tbody id="marks-entry-body"><tr><td colspan="4" class="empty-table">Choose a class to load its students.</td></tr></tbody></table></div>
+                <div class="form-actions"><button class="primary-button" type="submit">Save marks <span>→</span></button></div>
+              </form>
+              <div class="content-card table-card marks-history-card"><div class="table-toolbar"><div class="table-title"><h2>Recent assessments</h2><p>Marks saved to the student report cards.</p></div></div><div class="table-scroll"><table><thead><tr><th>EXAM</th><th>SUBJECT</th><th>CLASS</th><th>STUDENTS SCORED</th><th>AVERAGE</th></tr></thead><tbody id="marks-history-body"></tbody></table></div></div>
+            </section>
+
+            <section class="view-section view-reports">
+              <div class="page-heading"><div><div class="eyebrow">ACADEMICS</div><h1>Student reports</h1><p>Explore academic performance and student records by class.</p></div></div>
+              <div class="report-tabs" role="tablist" aria-label="Class reports"><label class="report-tab tab-10" for="report-10">10th class</label><label class="report-tab tab-11" for="report-11">11th class</label><label class="report-tab tab-12" for="report-12">12th class</label></div>
+              <div class="report-summary">
+                <article class="report-summary-card"><span class="summary-icon">♧</span><span><small>Students in class</small><b id="report-student-count">0</b></span></article>
+                <article class="report-summary-card"><span class="summary-icon summary-icon-green">✓</span><span><small>Average attendance</small><b id="report-attendance-average">—</b></span></article>
+                <article class="report-summary-card"><span class="summary-icon summary-icon-yellow">％</span><span><small>Average marks</small><b id="report-marks-average">—</b></span></article>
+              </div>
+              <div class="content-card table-card report-table-card">
+                <div class="table-toolbar"><div class="table-title"><h2 id="report-table-title">10th class students</h2><p>Attendance and assessment summary for each student.</p></div><select id="report-section"><option value="">All sections</option><option>A</option><option>B</option><option>C</option></select></div>
+                <div class="table-scroll"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>SECTION</th><th>ATTENDANCE</th><th>AVERAGE MARKS</th><th>EXAMS</th></tr></thead><tbody id="report-table-body"></tbody></table></div>
+                <div class="table-footer"><span id="report-footer">Saved student report</span><span>Academic year 2026–27</span></div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="app.js" defer></script>
+  </body>
+</html>
