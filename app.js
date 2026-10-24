@@ -13,7 +13,20 @@ const demoStudents = [
 const today = localDate();
 const students = loadStudents();
 const loginForm = document.getElementById("login-form");
-const portalToggle = document.getElementById("portal-toggle");
+const pageFiles = {
+  overview: "overview.html",
+  add: "add-student.html",
+  groups: "group-students.html",
+  ungrouped: "ungrouped-students.html",
+  directory: "all-students.html",
+  attendance: "attendance.html",
+  marks: "marks.html",
+  reports: "reports.html",
+};
+
+function on(id, eventName, handler) {
+  document.getElementById(id)?.addEventListener(eventName, handler);
+}
 
 function localDate(date = new Date()) {
   const year = date.getFullYear();
@@ -84,7 +97,7 @@ function displayDate(date) {
 }
 
 function currentReportClass() {
-  return document.querySelector('input[name="report-class"]:checked').value;
+  return document.querySelector('input[name="report-class"]:checked')?.value || "10th";
 }
 
 function filteredStudents(className = "", section = "") {
@@ -165,22 +178,28 @@ function renderDirectory() {
 
 function renderGroupedAndUngrouped() {
   const ungrouped = students.filter((student) => !student.className);
-  document.getElementById("group-count").textContent = `${ungrouped.length} ungrouped`;
-  document.getElementById("group-table-body").innerHTML = ungrouped.length ? ungrouped.map((student, index) => `
-    <tr><td><input class="group-student-check" type="checkbox" value="${escapeHtml(student.id)}" aria-label="Select ${escapeHtml(student.name)}" /></td>
-    <td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
-    <td>${escapeHtml(student.email || "—")}</td><td>${escapeHtml(displayDate(student.added))}</td></tr>`).join("")
-    : '<tr><td class="empty-state-cell" colspan="5">All students are assigned to a class.</td></tr>';
-  const query = document.getElementById("ungrouped-search").value.trim().toLowerCase();
-  const filtered = ungrouped.filter((student) => `${student.name} ${student.id} ${student.email}`.toLowerCase().includes(query));
-  document.getElementById("ungrouped-total").textContent = ungrouped.length;
-  document.getElementById("ungrouped-table-body").innerHTML = filtered.length ? filtered.map((student, index) => `
-    <tr><td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
-    <td>${escapeHtml(student.email || "—")}</td><td>${escapeHtml(displayDate(student.added))}</td>
-    <td><span class="status-tag">Ungrouped</span></td>
-    <td><button class="row-action go-group-student" type="button" data-student-id="${escapeHtml(student.id)}">Group</button></td></tr>`).join("")
-    : '<tr><td class="empty-state-cell" colspan="6">No ungrouped students found.</td></tr>';
-  document.getElementById("ungrouped-footer").textContent = `${filtered.length} students shown · ${ungrouped.length} need a class assignment`;
+  const groupBody = document.getElementById("group-table-body");
+  if (groupBody) {
+    document.getElementById("group-count").textContent = `${ungrouped.length} ungrouped`;
+    groupBody.innerHTML = ungrouped.length ? ungrouped.map((student, index) => `
+      <tr><td><input class="group-student-check" type="checkbox" value="${escapeHtml(student.id)}" aria-label="Select ${escapeHtml(student.name)}" /></td>
+      <td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
+      <td>${escapeHtml(student.email || "—")}</td><td>${escapeHtml(displayDate(student.added))}</td></tr>`).join("")
+      : '<tr><td class="empty-state-cell" colspan="5">All students are assigned to a class.</td></tr>';
+  }
+  const ungroupedBody = document.getElementById("ungrouped-table-body");
+  if (ungroupedBody) {
+    const query = document.getElementById("ungrouped-search").value.trim().toLowerCase();
+    const filtered = ungrouped.filter((student) => `${student.name} ${student.id} ${student.email}`.toLowerCase().includes(query));
+    document.getElementById("ungrouped-total").textContent = ungrouped.length;
+    ungroupedBody.innerHTML = filtered.length ? filtered.map((student, index) => `
+      <tr><td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
+      <td>${escapeHtml(student.email || "—")}</td><td>${escapeHtml(displayDate(student.added))}</td>
+      <td><span class="status-tag">Ungrouped</span></td>
+      <td><button class="row-action go-group-student" type="button" data-student-id="${escapeHtml(student.id)}">Group</button></td></tr>`).join("")
+      : '<tr><td class="empty-state-cell" colspan="6">No ungrouped students found.</td></tr>';
+    document.getElementById("ungrouped-footer").textContent = `${filtered.length} students shown · ${ungrouped.length} need a class assignment`;
+  }
 }
 
 function renderAttendance() {
@@ -238,60 +257,50 @@ function renderReport() {
     : '<tr><td colspan="6" class="empty-state-cell">No students are enrolled in this class and section yet.</td></tr>';
 }
 
-function renderAll() {
-  renderDashboard();
-  renderDirectory();
-  renderGroupedAndUngrouped();
-  renderAttendance();
-  renderMarksEntry();
-  renderMarksHistory();
-  renderReport();
+function renderCurrentPage() {
+  const page = document.body.dataset.page;
+  if (page === "overview") renderDashboard();
+  if (page === "directory") renderDirectory();
+  if (page === "groups" || page === "ungrouped") renderGroupedAndUngrouped();
+  if (page === "attendance") renderAttendance();
+  if (page === "marks") {
+    renderMarksEntry();
+    renderMarksHistory();
+  }
+  if (page === "reports") renderReport();
 }
 
 function setPage(page) {
-  const control = document.getElementById(`page-${page}`);
-  if (control) control.checked = true;
-  document.getElementById("mobile-nav-toggle").checked = false;
-  if (page === "attendance") renderAttendance();
-  if (page === "marks") renderMarksEntry();
-  if (page === "reports") renderReport();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const href = pageFiles[page];
+  if (href) window.location.assign(href);
 }
 
-loginForm.addEventListener("submit", (event) => {
+loginForm?.addEventListener("submit", (event) => {
   event.preventDefault();
   const email = document.getElementById("login-email").value.trim();
   const emailName = email.split("@")[0].split("+")[0].replace(/[._-]+/g, " ").trim();
   const displayName = emailName.split(/\s+/).filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ") || "Student";
-  const firstName = displayName.split(" ")[0];
-  const hour = new Date().getHours();
-  document.getElementById("welcome-name").textContent = displayName;
-  document.getElementById("greeting-text").textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
-  document.getElementById("profile-name").textContent = displayName;
-  document.getElementById("profile-avatar").textContent = firstName[0];
-  document.getElementById("topbar-avatar").textContent = firstName[0];
-  portalToggle.checked = true;
-  renderAll();
+  localStorage.setItem("campusly-profile-name", displayName);
+  window.location.assign(pageFiles.overview);
 });
 
-portalToggle.addEventListener("change", () => {
-  if (!portalToggle.checked) {
-    loginForm.reset();
-    document.getElementById("page-overview").checked = true;
-  }
-});
-
-document.querySelectorAll('input[name="page"]').forEach((input) => input.addEventListener("change", () => {
-  if (input.checked) setPage(input.id.replace("page-", ""));
-}));
 document.querySelectorAll('input[name="report-class"]').forEach((input) => input.addEventListener("change", renderReport));
 document.querySelectorAll("[data-report-class]").forEach((shortcut) => shortcut.addEventListener("click", () => {
-  document.querySelector(`input[name="report-class"][value="${shortcut.dataset.reportClass}"]`).checked = true;
-  renderReport();
+  const classInput = document.querySelector(`input[name="report-class"][value="${shortcut.dataset.reportClass}"]`);
+  if (classInput) {
+    classInput.checked = true;
+    renderReport();
+  } else {
+    window.location.assign(`reports.html?class=${encodeURIComponent(shortcut.dataset.reportClass)}`);
+  }
 }));
 
-document.getElementById("student-form").addEventListener("submit", (event) => {
+document.querySelectorAll(".profile-button").forEach((button) => button.addEventListener("click", () => {
+  localStorage.removeItem("campusly-profile-name");
+}));
+
+on("student-form", "submit", (event) => {
   event.preventDefault();
   const id = document.getElementById("student-id").value.trim();
   if (students.some((student) => student.id.toLowerCase() === id.toLowerCase())) {
@@ -315,15 +324,15 @@ document.getElementById("student-form").addEventListener("submit", (event) => {
   students.unshift(student);
   saveStudents();
   event.currentTarget.reset();
-  renderAll();
+  renderCurrentPage();
   setPage("directory");
 });
 
-document.getElementById("group-select-all").addEventListener("change", (event) => {
+on("group-select-all", "change", (event) => {
   document.querySelectorAll(".group-student-check").forEach((checkbox) => { checkbox.checked = event.target.checked; });
 });
 
-document.getElementById("assign-group").addEventListener("click", () => {
+on("assign-group", "click", () => {
   const selected = [...document.querySelectorAll(".group-student-check:checked")].map((checkbox) => checkbox.value);
   const className = document.getElementById("group-class").value;
   const section = document.getElementById("group-section").value;
@@ -338,18 +347,16 @@ document.getElementById("assign-group").addEventListener("click", () => {
     }
   });
   saveStudents();
-  renderAll();
+  renderCurrentPage();
 });
 
-document.getElementById("ungrouped-table-body").addEventListener("click", (event) => {
+on("ungrouped-table-body", "click", (event) => {
   const action = event.target.closest(".go-group-student");
   if (!action) return;
-  setPage("groups");
-  const checkbox = [...document.querySelectorAll(".group-student-check")].find((item) => item.value === action.dataset.studentId);
-  if (checkbox) checkbox.checked = true;
+  window.location.assign(`group-students.html?student=${encodeURIComponent(action.dataset.studentId)}`);
 });
 
-document.getElementById("directory-table-body").addEventListener("click", (event) => {
+on("directory-table-body", "click", (event) => {
   const unassign = event.target.closest(".unassign-student");
   if (unassign) {
     const student = students.find((record) => record.id === unassign.dataset.studentId);
@@ -357,7 +364,7 @@ document.getElementById("directory-table-body").addEventListener("click", (event
     student.className = "";
     student.section = "";
     saveStudents();
-    renderAll();
+    renderCurrentPage();
     return;
   }
   const action = event.target.closest(".delete-student");
@@ -366,10 +373,10 @@ document.getElementById("directory-table-body").addEventListener("click", (event
   if (!student || !window.confirm(`Remove ${student.name} and their attendance and marks from this device?`)) return;
   students.splice(students.indexOf(student), 1);
   saveStudents();
-  renderAll();
+  renderCurrentPage();
 });
 
-document.getElementById("save-attendance").addEventListener("click", () => {
+on("save-attendance", "click", () => {
   const date = document.getElementById("attendance-date").value;
   if (!date) {
     window.alert("Choose an attendance date first.");
@@ -390,18 +397,18 @@ document.getElementById("save-attendance").addEventListener("click", () => {
     if (student) student.attendance[date] = control.value;
   });
   saveStudents();
-  renderAll();
+  renderCurrentPage();
 });
 
-document.getElementById("mark-all-present").addEventListener("click", () => {
+on("mark-all-present", "click", () => {
   document.querySelectorAll("#attendance-table-body [data-attendance-id]").forEach((control) => { control.value = "Present"; });
 });
 
 ["attendance-date", "attendance-class", "attendance-section"].forEach((id) => {
-  document.getElementById(id).addEventListener("change", renderAttendance);
+  on(id, "change", renderAttendance);
 });
 
-document.getElementById("marks-form").addEventListener("submit", (event) => {
+on("marks-form", "submit", (event) => {
   event.preventDefault();
   const exam = document.getElementById("exam-name").value.trim();
   const subject = document.getElementById("exam-subject").value.trim();
@@ -426,25 +433,25 @@ document.getElementById("marks-form").addEventListener("submit", (event) => {
     else student.marks.push(mark);
   });
   saveStudents();
-  renderAll();
+  renderCurrentPage();
   event.currentTarget.reset();
   document.getElementById("exam-max").value = "100";
   renderMarksEntry();
 });
 
 ["exam-class", "exam-section", "exam-max"].forEach((id) => {
-  document.getElementById(id).addEventListener("change", renderMarksEntry);
-  document.getElementById(id).addEventListener("input", renderMarksEntry);
+  on(id, "change", renderMarksEntry);
+  on(id, "input", renderMarksEntry);
 });
 
 ["directory-search", "directory-class", "directory-section"].forEach((id) => {
-  document.getElementById(id).addEventListener("input", renderDirectory);
-  document.getElementById(id).addEventListener("change", renderDirectory);
+  on(id, "input", renderDirectory);
+  on(id, "change", renderDirectory);
 });
-document.getElementById("ungrouped-search").addEventListener("input", renderGroupedAndUngrouped);
-document.getElementById("report-section").addEventListener("change", renderReport);
+on("ungrouped-search", "input", renderGroupedAndUngrouped);
+on("report-section", "change", renderReport);
 
-document.getElementById("export-students").addEventListener("click", () => {
+on("export-students", "click", () => {
   const columns = ["Student ID", "Name", "Email", "Phone", "Guardian", "Class", "Section", "Attendance %", "Average marks %"];
   const rows = students.map((student) => [
     student.id, student.name, student.email, student.phone, student.guardian,
@@ -459,5 +466,39 @@ document.getElementById("export-students").addEventListener("click", () => {
   URL.revokeObjectURL(link.href);
 });
 
-document.getElementById("attendance-date").value = today;
-renderAll();
+const attendanceDate = document.getElementById("attendance-date");
+if (attendanceDate) attendanceDate.value = today;
+
+const profileName = localStorage.getItem("campusly-profile-name") || "School Admin";
+const firstName = profileName.split(" ")[0];
+const profileNameElement = document.getElementById("profile-name");
+const profileAvatar = document.getElementById("profile-avatar");
+const topbarAvatar = document.getElementById("topbar-avatar");
+const ungroupedNavCount = document.getElementById("ungrouped-nav-count");
+if (profileNameElement) profileNameElement.textContent = profileName;
+if (profileAvatar) profileAvatar.textContent = firstName[0];
+if (topbarAvatar) topbarAvatar.textContent = firstName[0];
+if (ungroupedNavCount) ungroupedNavCount.textContent = students.filter((student) => !student.className).length;
+const welcomeName = document.getElementById("welcome-name");
+const greetingText = document.getElementById("greeting-text");
+if (welcomeName) welcomeName.textContent = firstName;
+if (greetingText) {
+  const hour = new Date().getHours();
+  greetingText.textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+}
+
+renderCurrentPage();
+if (document.body.dataset.page === "groups") {
+  const selectedStudent = new URLSearchParams(window.location.search).get("student");
+  const checkbox = [...document.querySelectorAll(".group-student-check")]
+    .find((item) => item.value === selectedStudent);
+  if (checkbox) checkbox.checked = true;
+}
+if (document.body.dataset.page === "reports") {
+  const className = new URLSearchParams(window.location.search).get("class");
+  const classInput = document.querySelector(`input[name="report-class"][value="${className}"]`);
+  if (classInput) {
+    classInput.checked = true;
+    renderReport();
+  }
+}

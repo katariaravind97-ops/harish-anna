@@ -114,7 +114,7 @@ a { color: inherit; }
 .help-card small { margin-top: 4px; color: #9daecc; font-size: 9px; }
 .help-card a { margin-top: 10px; color: #9be2c1; text-decoration: none; font-size: 9px; font-weight: 700; }
 .help-card a span { padding-left: 3px; }
-.profile-button { display: flex; width: 100%; align-items: center; gap: 9px; padding: 10px 3px 2px; border: 0; border-top: 1px solid rgba(255,255,255,.13); color: #fff; background: transparent; text-align: left; }
+.profile-button { display: flex; width: 100%; align-items: center; gap: 9px; padding: 10px 3px 2px; border: 0; border-top: 1px solid rgba(255,255,255,.13); color: #fff; background: transparent; text-align: left; text-decoration: none; }
 .profile-avatar, .topbar-avatar { display: grid; width: 30px; height: 30px; flex: 0 0 30px; place-items: center; border-radius: 50%; color: #173877; background: #e4c9ae; font-size: 11px; font-weight: 700; }
 .profile-button > span:nth-child(2) { flex: 1; }
 .profile-button b, .profile-button small { display: block; }
@@ -124,6 +124,7 @@ a { color: inherit; }
 .portal-main { min-height: 100vh; margin-left: 244px; }
 .topbar { position: sticky; z-index: 3; top: 0; display: flex; height: 60px; align-items: center; justify-content: space-between; padding: 0 37px; border-bottom: 1px solid #ebeff5; background: rgba(255,255,255,.94); backdrop-filter: blur(10px); }
 .breadcrumbs { display: flex; align-items: center; gap: 11px; color: #9aa5b5; font-size: 10px; }
+.breadcrumbs a { color: inherit; text-decoration: none; }
 .breadcrumbs b { color: #43516a; font-weight: 600; }
 .crumb-divider { color: #c2c9d4; }
 .topbar-right { display: flex; align-items: center; gap: 17px; }
@@ -429,51 +430,26 @@ td { font-size: 11px; }
   outline-offset: 3px;
 }
 
-#portal-toggle:checked ~ .login-screen { display: none; }
-#portal-toggle:not(:checked) ~ .portal { display: none; }
 .portal { display: block; }
 
-.view-section { display: none; }
-#page-overview:checked ~ .portal .view-overview,
-#page-add:checked ~ .portal .view-add,
-#page-groups:checked ~ .portal .view-groups,
-#page-ungrouped:checked ~ .portal .view-ungrouped,
-#page-reports:checked ~ .portal .view-reports,
-#page-directory:checked ~ .portal .view-directory,
-#page-attendance:checked ~ .portal .view-attendance,
-#page-marks:checked ~ .portal .view-marks { display: block; }
-.crumb-add, .crumb-groups, .crumb-ungrouped, .crumb-reports, .crumb-directory, .crumb-attendance, .crumb-marks { display: none; }
-#page-add:checked ~ .portal .crumb-overview,
-#page-groups:checked ~ .portal .crumb-overview,
-#page-ungrouped:checked ~ .portal .crumb-overview,
-#page-reports:checked ~ .portal .crumb-overview,
-#page-directory:checked ~ .portal .crumb-overview,
-#page-attendance:checked ~ .portal .crumb-overview,
-#page-marks:checked ~ .portal .crumb-overview { display: none; }
-#page-add:checked ~ .portal .crumb-add,
-#page-groups:checked ~ .portal .crumb-groups,
-#page-ungrouped:checked ~ .portal .crumb-ungrouped,
-#page-reports:checked ~ .portal .crumb-reports { display: inline; }
-#page-directory:checked ~ .portal .crumb-directory { display: inline; }
-#page-attendance:checked ~ .portal .crumb-attendance { display: inline; }
-#page-marks:checked ~ .portal .crumb-marks { display: inline; }
-.nav-item { cursor: pointer; }
-#page-overview:checked ~ .portal .nav-overview,
-#page-add:checked ~ .portal .nav-add,
-#page-groups:checked ~ .portal .nav-groups,
-#page-ungrouped:checked ~ .portal .nav-ungrouped,
-#page-reports:checked ~ .portal .nav-reports,
-#page-directory:checked ~ .portal .nav-directory,
-#page-attendance:checked ~ .portal .nav-attendance,
-#page-marks:checked ~ .portal .nav-marks { color: #fff; background: #264b91; box-shadow: inset 2px 0 #86dfbc; }
-#page-overview:checked ~ .portal .nav-overview .nav-icon,
-#page-add:checked ~ .portal .nav-add .nav-icon,
-#page-groups:checked ~ .portal .nav-groups .nav-icon,
-#page-ungrouped:checked ~ .portal .nav-ungrouped .nav-icon,
-#page-reports:checked ~ .portal .nav-reports .nav-icon,
-#page-directory:checked ~ .portal .nav-directory .nav-icon,
-#page-attendance:checked ~ .portal .nav-attendance .nav-icon,
-#page-marks:checked ~ .portal .nav-marks .nav-icon { color: #9be2c1; }
+.view-section { display: block; }
+.nav-item { cursor: pointer; text-decoration: none; }
+body[data-page="overview"] .nav-overview,
+body[data-page="add"] .nav-add,
+body[data-page="groups"] .nav-groups,
+body[data-page="ungrouped"] .nav-ungrouped,
+body[data-page="reports"] .nav-reports,
+body[data-page="directory"] .nav-directory,
+body[data-page="attendance"] .nav-attendance,
+body[data-page="marks"] .nav-marks { color: #fff; background: #264b91; box-shadow: inset 2px 0 #86dfbc; }
+body[data-page="overview"] .nav-overview .nav-icon,
+body[data-page="add"] .nav-add .nav-icon,
+body[data-page="groups"] .nav-groups .nav-icon,
+body[data-page="ungrouped"] .nav-ungrouped .nav-icon,
+body[data-page="reports"] .nav-reports .nav-icon,
+body[data-page="directory"] .nav-directory .nav-icon,
+body[data-page="attendance"] .nav-attendance .nav-icon,
+body[data-page="marks"] .nav-marks .nav-icon { color: #9be2c1; }
 
 .report-shortcut-row { display: flex; width: 100%; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #f0f2f6; cursor: pointer; }
 .report-shortcut-row:hover .arrow { color: #285bc0; transform: translateX(2px); }
@@ -978,51 +954,26 @@ td { font-size: 11px; }
   outline-offset: 3px;
 }
 
-#portal-toggle:checked ~ .login-screen { display: none; }
-#portal-toggle:not(:checked) ~ .portal { display: none; }
 .portal { display: block; }
 
-.view-section { display: none; }
-#page-overview:checked ~ .portal .view-overview,
-#page-add:checked ~ .portal .view-add,
-#page-groups:checked ~ .portal .view-groups,
-#page-ungrouped:checked ~ .portal .view-ungrouped,
-#page-reports:checked ~ .portal .view-reports,
-#page-directory:checked ~ .portal .view-directory,
-#page-attendance:checked ~ .portal .view-attendance,
-#page-marks:checked ~ .portal .view-marks { display: block; }
-.crumb-add, .crumb-groups, .crumb-ungrouped, .crumb-reports, .crumb-directory, .crumb-attendance, .crumb-marks { display: none; }
-#page-add:checked ~ .portal .crumb-overview,
-#page-groups:checked ~ .portal .crumb-overview,
-#page-ungrouped:checked ~ .portal .crumb-overview,
-#page-reports:checked ~ .portal .crumb-overview,
-#page-directory:checked ~ .portal .crumb-overview,
-#page-attendance:checked ~ .portal .crumb-overview,
-#page-marks:checked ~ .portal .crumb-overview { display: none; }
-#page-add:checked ~ .portal .crumb-add,
-#page-groups:checked ~ .portal .crumb-groups,
-#page-ungrouped:checked ~ .portal .crumb-ungrouped,
-#page-reports:checked ~ .portal .crumb-reports { display: inline; }
-#page-directory:checked ~ .portal .crumb-directory { display: inline; }
-#page-attendance:checked ~ .portal .crumb-attendance { display: inline; }
-#page-marks:checked ~ .portal .crumb-marks { display: inline; }
-.nav-item { cursor: pointer; }
-#page-overview:checked ~ .portal .nav-overview,
-#page-add:checked ~ .portal .nav-add,
-#page-groups:checked ~ .portal .nav-groups,
-#page-ungrouped:checked ~ .portal .nav-ungrouped,
-#page-reports:checked ~ .portal .nav-reports,
-#page-directory:checked ~ .portal .nav-directory,
-#page-attendance:checked ~ .portal .nav-attendance,
-#page-marks:checked ~ .portal .nav-marks { color: #fff; background: #264b91; box-shadow: inset 2px 0 #86dfbc; }
-#page-overview:checked ~ .portal .nav-overview .nav-icon,
-#page-add:checked ~ .portal .nav-add .nav-icon,
-#page-groups:checked ~ .portal .nav-groups .nav-icon,
-#page-ungrouped:checked ~ .portal .nav-ungrouped .nav-icon,
-#page-reports:checked ~ .portal .nav-reports .nav-icon,
-#page-directory:checked ~ .portal .nav-directory .nav-icon,
-#page-attendance:checked ~ .portal .nav-attendance .nav-icon,
-#page-marks:checked ~ .portal .nav-marks .nav-icon { color: #9be2c1; }
+.view-section { display: block; }
+.nav-item { cursor: pointer; text-decoration: none; }
+body[data-page="overview"] .nav-overview,
+body[data-page="add"] .nav-add,
+body[data-page="groups"] .nav-groups,
+body[data-page="ungrouped"] .nav-ungrouped,
+body[data-page="reports"] .nav-reports,
+body[data-page="directory"] .nav-directory,
+body[data-page="attendance"] .nav-attendance,
+body[data-page="marks"] .nav-marks { color: #fff; background: #264b91; box-shadow: inset 2px 0 #86dfbc; }
+body[data-page="overview"] .nav-overview .nav-icon,
+body[data-page="add"] .nav-add .nav-icon,
+body[data-page="groups"] .nav-groups .nav-icon,
+body[data-page="ungrouped"] .nav-ungrouped .nav-icon,
+body[data-page="reports"] .nav-reports .nav-icon,
+body[data-page="directory"] .nav-directory .nav-icon,
+body[data-page="attendance"] .nav-attendance .nav-icon,
+body[data-page="marks"] .nav-marks .nav-icon { color: #9be2c1; }
 
 .report-shortcut-row { display: flex; width: 100%; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid #f0f2f6; cursor: pointer; }
 .report-shortcut-row:hover .arrow { color: #285bc0; transform: translateX(2px); }
