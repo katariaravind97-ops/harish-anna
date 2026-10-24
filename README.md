@@ -12,5 +12,6 @@ a website is done for my brother
 - [attendance.html](./attendance.html) — daily attendance
 - [marks.html](./marks.html) — marks and exams
 - [reports.html](./reports.html) — student reports
+- [goalplan.html](./goalplan.html) — create and view student goalplans with course payments, goal projections up to 100 years, interactive allocation, risk estimates, and investment preferences
 
-All pages share `styles.css` and `app.js`. Student records and the signed-in display name remain saved in this browser.
+All pages share `styles.css` and `app.js`. Student records, goalplans, and the signed-in display name remain saved in this browser.

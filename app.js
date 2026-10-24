@@ -1,4 +1,5 @@
 const STORAGE_KEY = "campusly-school-records-v2";
+const GOALPLAN_STORAGE_KEY = "campusly-goalplans-v1";
 const demoStudents = [
   { id: "STU-1024", name: "Aarav Sharma", email: "aarav.sharma@northview.edu", phone: "", guardian: "Raj Sharma", dob: "", className: "10th", section: "A", added: "2026-10-20", attendance: {}, marks: [] },
   { id: "STU-1023", name: "Ananya Patel", email: "ananya.patel@northview.edu", phone: "", guardian: "Neha Patel", dob: "", className: "11th", section: "B", added: "2026-10-19", attendance: {}, marks: [] },
@@ -22,6 +23,7 @@ const pageFiles = {
   attendance: "attendance.html",
   marks: "marks.html",
   reports: "reports.html",
+  goalplan: "goalplan.html",
 };
 
 function on(id, eventName, handler) {
@@ -73,6 +75,21 @@ function loadStudents() {
   }
 }
 
+function loadGoalplans() {
+  const saved = localStorage.getItem(GOALPLAN_STORAGE_KEY);
+  if (!saved) return [];
+  try {
+    const records = JSON.parse(saved);
+    if (!Array.isArray(records)) throw new Error("Saved goalplans must be a list.");
+    return records;
+  } catch (error) {
+    console.error("Unable to read saved goalplans.", error);
+    return [];
+  }
+}
+
+const goalplans = loadGoalplans();
+
 function saveStudents() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
 }
@@ -94,6 +111,184 @@ function classLabel(student) {
 function displayDate(date) {
   if (!date) return "—";
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${date}T12:00:00`));
+}
+
+function renderGoalplans() {
+  const list = document.getElementById("goalplan-list");
+  if (!list) return;
+  list.innerHTML = goalplans.length ? goalplans.map((goalplan) => `
+    <article class="goalplan-item">
+      <div class="goalplan-item-icon" aria-hidden="true">◎</div>
+      <div class="goalplan-item-copy">
+        <div class="goalplan-item-heading"><div><h3>${escapeHtml(goalplan.goalTitle || goalplan.name || "Untitled goalplan")}</h3><p>${escapeHtml(goalplan.studentName || "Student name not provided")} · ${escapeHtml(goalplan.rollNumber || "No roll number")}</p></div><span class="goalplan-payment-badge">${escapeHtml(goalplan.paymentType || "Payment type not set")}</span></div>
+        ${goalplan.goalCategory ? `<p class="goalplan-category">${escapeHtml(goalplan.goalCategory)}</p>` : ""}
+        ${goalplan.financialGoal ? `<p class="goalplan-category">Planning goal · ${escapeHtml(goalplan.financialGoal)}</p>` : ""}
+        <div class="goalplan-item-meta">
+          ${goalplan.joinDate || goalplan.targetDate ? `<span>Join date · ${escapeHtml(displayDate(goalplan.joinDate || goalplan.targetDate))}</span>` : ""}
+          ${goalplan.courseDuration ? `<span>${escapeHtml(goalplan.courseDuration)} ${escapeHtml(goalplan.durationUnit || "months")}</span>` : ""}
+          ${Number.isFinite(Number(goalplan.totalFees)) ? `<span>${escapeHtml(new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(goalplan.totalFees)))}</span>` : ""}
+          ${goalplan.goalHorizon ? `<span>Goal · ${escapeHtml(goalplan.goalHorizon)} years</span>` : ""}
+          ${Number.isFinite(Number(goalplan.futureValue)) ? `<span>Future value · ${escapeHtml(moneyText(Number(goalplan.futureValue)))}</span>` : ""}
+          ${goalplan.protectGoal !== undefined ? `<span>Protection · ${goalplan.protectGoal ? "Yes" : "No"}</span>` : ""}
+          ${goalplan.riskProfile ? `<span>${escapeHtml(goalplan.riskProfile)} · ${escapeHtml(goalplan.equityAllocation)}% equity / ${escapeHtml(goalplan.debtAllocation)}% debt</span>` : ""}
+          ${goalplan.investmentPreference ? `<span>${escapeHtml(goalplan.investmentPreference)}</span>` : ""}
+        </div>
+        ${Array.isArray(goalplan.investmentTypes) && goalplan.investmentTypes.length ? `<p class="goalplan-category">Investment areas · ${escapeHtml(goalplan.investmentTypes.join(", "))}</p>` : ""}
+      </div>
+    </article>`).join("") : '<div class="empty-state goalplan-empty-state"><span class="goalplan-empty-icon" aria-hidden="true">◎</span><b>No goalplans yet</b><p>Create your first goalplan to start tracking a school goal.</p></div>';
+}
+
+function setGoalplanStep(step) {
+  const form = document.getElementById("goalplan-form");
+  if (!form || step < 1 || step > 3) return;
+  form.dataset.currentStep = String(step);
+  form.querySelectorAll("[data-goalplan-step-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.goalplanStepPanel !== String(step);
+  });
+  form.querySelectorAll("[data-goalplan-step-button]").forEach((button) => {
+    const buttonStep = Number(button.dataset.goalplanStepButton);
+    button.classList.toggle("is-active", buttonStep === step);
+    button.classList.toggle("is-complete", buttonStep < step);
+    if (buttonStep === step) button.setAttribute("aria-current", "step");
+    else button.removeAttribute("aria-current");
+    button.disabled = buttonStep > step;
+  });
+  if (step === 3) renderGoalplanSummary();
+}
+
+function moneyText(amount) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+function updateGoalplanFutureValue() {
+  const presentValue = Number(document.getElementById("goalplan-present-value")?.value);
+  const inflationRate = Number(document.getElementById("goalplan-inflation")?.value);
+  const horizon = Number(document.getElementById("goalplan-horizon")?.value);
+  const futureValue = document.getElementById("goalplan-future-value");
+  if (!futureValue) return;
+  futureValue.value = Number.isFinite(presentValue) && presentValue > 0
+    ? moneyText(presentValue * ((1 + inflationRate / 100) ** horizon))
+    : "";
+}
+
+function updateGoalplanHorizon() {
+  const horizon = document.getElementById("goalplan-horizon");
+  const output = document.getElementById("goalplan-horizon-value");
+  if (!horizon || !output) return;
+  const years = Number(horizon.value);
+  output.value = `${years} ${years === 1 ? "year" : "years"}`;
+  output.textContent = output.value;
+  updateGoalplanFutureValue();
+}
+
+function updateGoalplanAllocation() {
+  const equity = document.getElementById("goalplan-equity");
+  const equityValue = document.getElementById("goalplan-equity-value");
+  const debtValue = document.getElementById("goalplan-debt-value");
+  const total = document.getElementById("goalplan-allocation-total");
+  if (!equity || !equityValue || !debtValue || !total) return;
+  const equityAllocation = Number(equity.value);
+  equityValue.value = String(equityAllocation);
+  equityValue.textContent = String(equityAllocation);
+  debtValue.value = String(100 - equityAllocation);
+  debtValue.textContent = String(100 - equityAllocation);
+  equity.style.setProperty("--equity-share", `${equityAllocation}%`);
+  total.textContent = "100% allocated";
+  analyzeGoalplanRisk();
+}
+
+function analyzeGoalplanRisk() {
+  const equity = Number(document.getElementById("goalplan-equity").value);
+  const debt = 100 - equity;
+  const equityGrowth = Number(document.getElementById("goalplan-equity-growth").value);
+  const debtGrowth = Number(document.getElementById("goalplan-debt-growth").value);
+  const message = document.getElementById("goalplan-risk-description");
+  const equityGrowthField = document.getElementById("goalplan-equity-growth");
+  const debtGrowthField = document.getElementById("goalplan-debt-growth");
+  const meter = document.querySelector(".goalplan-risk-meter-track");
+  if (![equity, debt, equityGrowth, debtGrowth].every(Number.isFinite)
+    || !equityGrowthField.checkValidity() || !debtGrowthField.checkValidity()) {
+    document.getElementById("goalplan-risk-label").textContent = "Check growth rates";
+    meter.setAttribute("aria-valuenow", "0");
+    meter.setAttribute("aria-valuetext", "Growth assumptions are invalid");
+    document.getElementById("goalplan-risk-needle").style.left = "0%";
+    message.textContent = "Enter growth assumptions from 0% to 30%.";
+    return false;
+  }
+  const weightedGrowth = ((equity * equityGrowth) + (debt * debtGrowth)) / 100;
+  const profile = weightedGrowth < 8 ? "Conservative" : weightedGrowth < 12 ? "Balanced" : "Growth-focused";
+  document.getElementById("goalplan-risk-label").textContent = profile;
+  meter.setAttribute("aria-valuenow", weightedGrowth.toFixed(1));
+  meter.setAttribute("aria-valuetext", `${profile}: ${weightedGrowth.toFixed(1)}% estimated weighted growth`);
+  document.getElementById("goalplan-risk-needle").style.left = `${Math.min(100, (weightedGrowth / 30) * 100)}%`;
+  message.textContent = `Illustrative weighted growth assumption: ${weightedGrowth.toFixed(1)}%.`;
+  return true;
+}
+
+function validateGoalplanStep(step) {
+  const panel = document.querySelector(`[data-goalplan-step-panel="${step}"]`);
+  if (!panel) return false;
+  const invalid = [...panel.querySelectorAll("input, select")].find((field) => !field.checkValidity());
+  if (invalid) {
+    invalid.reportValidity();
+    invalid.focus();
+    return false;
+  }
+  if (step === 2 && !analyzeGoalplanRisk()) return false;
+  return true;
+}
+
+function renderGoalplanSummary() {
+  const summary = document.getElementById("goalplan-summary");
+  if (!summary) return;
+  const value = (id) => document.getElementById(id).value.trim();
+  const paymentType = document.getElementById("goalplan-payment-type").value;
+  const durationUnit = document.getElementById("goalplan-duration-unit").value;
+  const totalFees = Number(document.getElementById("goalplan-total-fees").value);
+  const goalCategory = document.querySelector('input[name="goalCategory"]:checked')?.value || "No focus selected";
+  const financialGoal = document.querySelector('input[name="financialGoal"]:checked')?.value || "No goal selected";
+  const presentValue = Number(value("goalplan-present-value"));
+  const horizon = Number(value("goalplan-horizon"));
+  const inflationRate = Number(value("goalplan-inflation"));
+  const equity = Number(value("goalplan-equity"));
+  const debt = 100 - equity;
+  const equityGrowth = Number(value("goalplan-equity-growth"));
+  const debtGrowth = Number(value("goalplan-debt-growth"));
+  const riskIsValid = analyzeGoalplanRisk();
+  const futureValue = presentValue * ((1 + inflationRate / 100) ** horizon);
+  const weightedGrowth = ((equity * equityGrowth) + (debt * debtGrowth)) / 100;
+  const riskProfile = riskIsValid
+    ? weightedGrowth < 8 ? "Conservative" : weightedGrowth < 12 ? "Balanced" : "Growth-focused"
+    : "Check growth rates";
+  const investments = [...document.querySelectorAll('input[name="investmentTypes"]:checked')].map((input) => input.value);
+  const fields = [
+    ["Student", value("goalplan-student-name")],
+    ["Roll number", value("goalplan-roll-number")],
+    ["Join date", displayDate(value("goalplan-join-date"))],
+    ["Goal title", value("goalplan-title")],
+    ["Goal focus", goalCategory],
+    ["Planning goal", financialGoal],
+    ["Payment type", paymentType],
+    ["Course duration", `${value("goalplan-duration")} ${durationUnit}`],
+    ["Course total fees", moneyText(totalFees)],
+    ["Goal horizon", `${horizon} ${horizon === 1 ? "year" : "years"}`],
+    ["Present goal value", moneyText(presentValue)],
+    ["Inflation assumption", `${inflationRate}%`],
+    ["Estimated future goal value", moneyText(futureValue)],
+    ["Goal protection", document.getElementById("goalplan-protect").checked ? "Yes" : "No"],
+    ["Risk profile", `${riskProfile} · ${weightedGrowth.toFixed(1)}% illustrative growth`],
+    ["Asset allocation", `Equity ${equity}% · Debt ${debt}%`],
+    ["Estimated equity growth", `${equityGrowth}%`],
+    ["Estimated debt growth", `${debtGrowth}%`],
+    ["Investment areas", investments.length ? investments.join(", ") : "None selected"],
+    ["Investment preference", document.querySelector('input[name="investmentPreference"]:checked')?.value || "—"],
+  ];
+  summary.innerHTML = fields.map(([label, fieldValue]) => `
+    <div class="goalplan-summary-item"><span>${escapeHtml(label)}</span><b>${escapeHtml(fieldValue || "—")}</b></div>`).join("");
 }
 
 function currentReportClass() {
@@ -260,6 +455,7 @@ function renderReport() {
 function renderCurrentPage() {
   const page = document.body.dataset.page;
   if (page === "overview") renderDashboard();
+  if (page === "goalplan") renderGoalplans();
   if (page === "directory") renderDirectory();
   if (page === "groups" || page === "ungrouped") renderGroupedAndUngrouped();
   if (page === "attendance") renderAttendance();
@@ -286,12 +482,13 @@ loginForm?.addEventListener("submit", (event) => {
 });
 
 document.querySelectorAll('input[name="report-class"]').forEach((input) => input.addEventListener("change", renderReport));
-document.querySelectorAll("[data-report-class]").forEach((shortcut) => shortcut.addEventListener("click", () => {
+document.querySelectorAll("[data-report-class]").forEach((shortcut) => shortcut.addEventListener("click", (event) => {
   const classInput = document.querySelector(`input[name="report-class"][value="${shortcut.dataset.reportClass}"]`);
   if (classInput) {
     classInput.checked = true;
     renderReport();
   } else {
+    event.preventDefault();
     window.location.assign(`reports.html?class=${encodeURIComponent(shortcut.dataset.reportClass)}`);
   }
 }));
@@ -326,6 +523,133 @@ on("student-form", "submit", (event) => {
   event.currentTarget.reset();
   renderCurrentPage();
   setPage("directory");
+});
+
+on("create-goalplan-button", "click", () => {
+  const form = document.getElementById("goalplan-form");
+  form.reset();
+  const joinDate = document.getElementById("goalplan-join-date");
+  if (!joinDate.value) joinDate.value = today;
+  updateGoalplanHorizon();
+  updateGoalplanAllocation();
+  document.getElementById("goalplan-protect-label").textContent = "Yes";
+  setGoalplanStep(1);
+  form.hidden = false;
+  document.getElementById("goalplan-roll-number").focus();
+});
+
+on("cancel-goalplan", "click", () => {
+  const form = document.getElementById("goalplan-form");
+  form.reset();
+  const joinDate = document.getElementById("goalplan-join-date");
+  if (joinDate) joinDate.value = today;
+  updateGoalplanHorizon();
+  updateGoalplanAllocation();
+  document.getElementById("goalplan-protect-label").textContent = "Yes";
+  setGoalplanStep(1);
+  form.hidden = true;
+  document.getElementById("create-goalplan-button").focus();
+});
+
+["goalplan-present-value", "goalplan-inflation"].forEach((id) => {
+  on(id, "input", updateGoalplanFutureValue);
+  on(id, "change", updateGoalplanFutureValue);
+});
+on("goalplan-horizon", "input", updateGoalplanHorizon);
+
+document.querySelectorAll("[data-inflation-step]").forEach((button) => button.addEventListener("click", () => {
+  const input = document.getElementById("goalplan-inflation");
+  const nextRate = Number(input.value) + Number(button.dataset.inflationStep) * 0.5;
+  input.value = String(Math.min(20, Math.max(0, nextRate)));
+  updateGoalplanFutureValue();
+}));
+
+on("goalplan-protect", "change", (event) => {
+  document.getElementById("goalplan-protect-label").textContent = event.currentTarget.checked ? "Yes" : "No";
+});
+
+on("goalplan-equity", "input", (event) => {
+  updateGoalplanAllocation();
+});
+["goalplan-equity-growth", "goalplan-debt-growth"].forEach((id) => {
+  on(id, "input", analyzeGoalplanRisk);
+  on(id, "change", analyzeGoalplanRisk);
+});
+
+document.querySelectorAll("[data-goalplan-next]").forEach((button) => button.addEventListener("click", () => {
+  const currentStep = Number(document.getElementById("goalplan-form").dataset.currentStep || 1);
+  if (!validateGoalplanStep(currentStep)) return;
+  setGoalplanStep(Number(button.dataset.goalplanNext));
+}));
+
+document.querySelectorAll("[data-goalplan-back]").forEach((button) => button.addEventListener("click", () => {
+  setGoalplanStep(Number(button.dataset.goalplanBack));
+}));
+
+document.querySelectorAll("[data-goalplan-step-button]").forEach((button) => button.addEventListener("click", () => {
+  const currentStep = Number(document.getElementById("goalplan-form").dataset.currentStep || 1);
+  const targetStep = Number(button.dataset.goalplanStepButton);
+  if (targetStep < currentStep) setGoalplanStep(targetStep);
+}));
+
+on("goalplan-form", "submit", (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (Number(form.dataset.currentStep) !== 3) return;
+  const rollNumber = document.getElementById("goalplan-roll-number").value.trim();
+  const studentName = document.getElementById("goalplan-student-name").value.trim();
+  const goalTitle = document.getElementById("goalplan-title").value.trim();
+  const totalFees = Number(document.getElementById("goalplan-total-fees").value);
+  const presentValue = Number(document.getElementById("goalplan-present-value").value);
+  const inflationRate = Number(document.getElementById("goalplan-inflation").value);
+  const horizon = Number(document.getElementById("goalplan-horizon").value);
+  const equityAllocation = Number(document.getElementById("goalplan-equity").value);
+  const debtAllocation = 100 - equityAllocation;
+  const equityGrowth = Number(document.getElementById("goalplan-equity-growth").value);
+  const debtGrowth = Number(document.getElementById("goalplan-debt-growth").value);
+  if (!rollNumber || !studentName || !goalTitle || !Number.isFinite(totalFees) || totalFees < 0
+    || !Number.isFinite(presentValue) || presentValue <= 0
+    || !Number.isFinite(horizon) || horizon < 1 || horizon > 100
+    || equityAllocation < 0 || equityAllocation > 100
+    || !analyzeGoalplanRisk()) return;
+  const weightedGrowth = ((equityAllocation * equityGrowth) + (debtAllocation * debtGrowth)) / 100;
+  const financialGoal = document.querySelector('input[name="financialGoal"]:checked')?.value || "";
+  goalplans.unshift({
+    rollNumber,
+    joinDate: document.getElementById("goalplan-join-date").value,
+    studentName,
+    goalTitle,
+    goalCategory: document.querySelector('input[name="goalCategory"]:checked')?.value || "",
+    financialGoal,
+    paymentType: document.getElementById("goalplan-payment-type").value,
+    courseDuration: Number(document.getElementById("goalplan-duration").value),
+    durationUnit: document.getElementById("goalplan-duration-unit").value,
+    totalFees,
+    goalHorizon: horizon,
+    presentValue,
+    inflationRate,
+    futureValue: presentValue * ((1 + inflationRate / 100) ** horizon),
+    protectGoal: document.getElementById("goalplan-protect").checked,
+    equityAllocation,
+    debtAllocation,
+    equityGrowth,
+    debtGrowth,
+    riskProfile: weightedGrowth < 8 ? "Conservative" : weightedGrowth < 12 ? "Balanced" : "Growth-focused",
+    weightedGrowth,
+    investmentTypes: [...document.querySelectorAll('input[name="investmentTypes"]:checked')].map((input) => input.value),
+    investmentPreference: document.querySelector('input[name="investmentPreference"]:checked')?.value || "",
+  });
+  localStorage.setItem(GOALPLAN_STORAGE_KEY, JSON.stringify(goalplans));
+  form.reset();
+  const joinDate = document.getElementById("goalplan-join-date");
+  if (joinDate) joinDate.value = today;
+  setGoalplanStep(1);
+  form.hidden = true;
+  updateGoalplanHorizon();
+  updateGoalplanAllocation();
+  document.getElementById("goalplan-protect-label").textContent = "Yes";
+  renderGoalplans();
+  document.getElementById("create-goalplan-button").focus();
 });
 
 on("group-select-all", "change", (event) => {
@@ -468,6 +792,10 @@ on("export-students", "click", () => {
 
 const attendanceDate = document.getElementById("attendance-date");
 if (attendanceDate) attendanceDate.value = today;
+const goalplanJoinDate = document.getElementById("goalplan-join-date");
+if (goalplanJoinDate) goalplanJoinDate.value = today;
+updateGoalplanHorizon();
+updateGoalplanAllocation();
 
 const profileName = localStorage.getItem("campusly-profile-name") || "School Admin";
 const firstName = profileName.split(" ")[0];
