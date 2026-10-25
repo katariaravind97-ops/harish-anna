@@ -578,6 +578,7 @@ body[data-page="goalplan"] .nav-goalplan .nav-icon { color: #9be2c1; }
 .plan-action-fields .form-field input { width: 100%; }
 .goalplan-list-card { margin-top: 22px; }
 .goalplan-list-card .table-toolbar { padding: 17px 18px; }
+.plan-download-button { min-height: 32px; padding: 0 10px; font-size: 10px; white-space: nowrap; }
 @media (max-width: 900px) {
   .plan-customer-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .plan-goal-type { grid-column: span 2; }

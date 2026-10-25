@@ -136,6 +136,282 @@ function customerSelect(id, selected = "") {
     `<option value="${escapeHtml(customer.id)}" ${customer.id === selected ? "selected" : ""}>${escapeHtml(customer.name)}${customer.company ? ` · ${escapeHtml(customer.company)}` : ""}</option>`).join("")}</select>`;
 }
 
+function pdfSafeText(value) {
+  return String(value ?? "")
+    .replace(/[₹]/g, "INR ")
+    .replace(/[–—]/g, "-")
+    .replace(/[’‘]/g, "'")
+    .replace(/[“”]/g, '"')
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\x20-\x7E]/g, "?");
+}
+
+function createGoalPlanPdf(plan) {
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const pages = [];
+  let commands;
+  const colors = {
+    navy: [0.12, 0.20, 0.29],
+    blue: [0.15, 0.34, 0.52],
+    teal: [0.22, 0.54, 0.54],
+    gold: [0.77, 0.57, 0.12],
+    red: [0.58, 0.23, 0.21],
+    muted: [0.38, 0.42, 0.47],
+    line: [0.80, 0.83, 0.85],
+    light: [0.95, 0.96, 0.96],
+    white: [1, 1, 1],
+  };
+  const pdfColor = (color) => color.map((channel) => channel.toFixed(3)).join(" ");
+  const escape = (value) => pdfSafeText(value).replace(/([\\()])/g, "\\$1");
+  const text = (value, x, y, size = 10, color = colors.navy, bold = false) => {
+    commands.push(`BT /${bold ? "F2" : "F1"} ${size} Tf ${pdfColor(color)} rg 1 0 0 1 ${x.toFixed(2)} ${(pageHeight - y).toFixed(2)} Tm (${escape(value)}) Tj ET`);
+  };
+  const rect = (x, y, width, height, color) => {
+    commands.push(`${pdfColor(color)} rg ${x} ${(pageHeight - y - height).toFixed(2)} ${width} ${height} re f`);
+  };
+  const strokeRect = (x, y, width, height, color = colors.line, lineWidth = 0.7) => {
+    commands.push(`${lineWidth} w ${pdfColor(color)} RG ${x} ${(pageHeight - y - height).toFixed(2)} ${width} ${height} re S`);
+  };
+  const line = (x1, y1, x2, y2, color = colors.line, lineWidth = 0.7) => {
+    commands.push(`${lineWidth} w ${pdfColor(color)} RG ${x1} ${(pageHeight - y1).toFixed(2)} m ${x2} ${(pageHeight - y2).toFixed(2)} l S`);
+  };
+  const circle = (cx, cy, radius, color, lineWidth = 1, fill = false) => {
+    const k = radius * 0.5522847498;
+    const y = (value) => (pageHeight - value).toFixed(2);
+    const path = `${(cx + radius).toFixed(2)} ${y(cy)} m ${(cx + radius).toFixed(2)} ${y(cy - k)} ${(cx + k).toFixed(2)} ${y(cy - radius)} ${cx.toFixed(2)} ${y(cy - radius)} c ${(cx - k).toFixed(2)} ${y(cy - radius)} ${(cx - radius).toFixed(2)} ${y(cy - k)} ${(cx - radius).toFixed(2)} ${y(cy)} c ${(cx - radius).toFixed(2)} ${y(cy + k)} ${(cx - k).toFixed(2)} ${y(cy + radius)} ${cx.toFixed(2)} ${y(cy + radius)} c ${(cx + k).toFixed(2)} ${y(cy + radius)} ${(cx + radius).toFixed(2)} ${y(cy + k)} ${(cx + radius).toFixed(2)} ${y(cy)} c`;
+    commands.push(`${lineWidth} w ${pdfColor(color)} ${fill ? "rg" : "RG"} ${path} ${fill ? "f" : "S"}`);
+  };
+  const arcBand = (cx, cy, outerRadius, innerRadius, startAngle, endAngle, color) => {
+    const points = [];
+    for (let step = 0; step <= 12; step += 1) {
+      const angle = (startAngle + ((endAngle - startAngle) * step / 12)) * Math.PI / 180;
+      points.push([cx + outerRadius * Math.cos(angle), cy - outerRadius * Math.sin(angle)]);
+    }
+    for (let step = 12; step >= 0; step -= 1) {
+      const angle = (startAngle + ((endAngle - startAngle) * step / 12)) * Math.PI / 180;
+      points.push([cx + innerRadius * Math.cos(angle), cy - innerRadius * Math.sin(angle)]);
+    }
+    const path = points.map(([x, y], index) =>
+      `${x.toFixed(2)} ${(pageHeight - y).toFixed(2)} ${index === 0 ? "m" : "l"}`).join(" ");
+    commands.push(`${pdfColor(color)} rg ${path} h f`);
+  };
+  const wrap = (value, maxChars) => {
+    const words = pdfSafeText(value).split(/\s+/);
+    const lines = [];
+    let current = "";
+    words.forEach((word) => {
+      const candidate = current ? `${current} ${word}` : word;
+      if (candidate.length > maxChars && current) {
+        lines.push(current);
+        current = word;
+      } else current = candidate;
+    });
+    if (current) lines.push(current);
+    return lines.length ? lines : [""];
+  };
+  const startPage = () => {
+    commands = [];
+    pages.push(commands);
+  };
+  const pageFrame = (pageNumber, subtitle) => {
+    rect(0, 0, pageWidth, 9, colors.teal);
+    text("CLIENTLY  |  CUSTOMER GOAL PLANNING", 42, 37, 9, colors.blue, true);
+    text(subtitle, 42, 56, 8, colors.muted);
+    line(42, 68, 553, 68, colors.blue, 1.2);
+    line(42, 800, 553, 800, colors.line, 0.6);
+    text("Prepared for " + (plan.customerName || "Customer"), 42, 817, 7, colors.muted);
+    text(`Page ${pageNumber}`, 520, 817, 7, colors.muted);
+  };
+  const money = (amount) => `INR ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number.isFinite(Number(amount)) ? Number(amount) : 0)}`;
+  const date = plan.planDate ? displayDate(plan.planDate) : "Not provided";
+  const horizon = Math.max(1, Math.min(100, Number(plan.horizon) || 1));
+  const presentValue = Math.max(0, Number(plan.presentValue) || 0);
+  const inflation = Math.max(0, Number(plan.inflation) || 0);
+  const futureValue = presentValue * ((1 + inflation / 100) ** horizon);
+  const equity = Math.max(0, Math.min(100, Number(plan.equityAllocation) || 0));
+  const debt = 100 - equity;
+  const risk = pdfSafeText(plan.riskProfile || "Illustrative estimate");
+  const investments = Array.isArray(plan.investments) ? plan.investments : [];
+
+  startPage();
+  const bandColors = [colors.teal, colors.red, colors.gold, colors.navy, [0.47, 0.52, 0.23]];
+  bandColors.forEach((color, index) => rect(42 + index * 102.2, 28, 102.2, 14, color));
+  text("PERSONALIZED GOAL BASED PLAN", 92, 104, 21, colors.blue, true);
+  text("Specially prepared for", 230, 130, 11, colors.muted);
+  wrap(plan.customerName || "Customer", 38).slice(0, 2).forEach((row, index) => text(row, 100, 160 + index * 26, 19, colors.red, true));
+  if (plan.company) text(pdfSafeText(plan.company), 150, 207, 11, colors.muted);
+  circle(297, 398, 104, colors.navy, 10);
+  circle(297, 398, 73, colors.navy, 8);
+  circle(297, 398, 42, colors.navy, 7);
+  circle(297, 398, 12, colors.navy, 1, true);
+  line(273, 420, 356, 337, colors.navy, 10);
+  line(356, 337, 347, 340, colors.navy, 7);
+  line(356, 337, 353, 347, colors.navy, 7);
+  rect(65, 544, 465, 46, colors.navy);
+  rect(65, 544, 126, 46, colors.gold);
+  text("GOAL", 102, 573, 15, colors.white, true);
+  wrap(plan.goal || plan.goalTitle || "Customer goal", 44).slice(0, 2).forEach((row, index) => text(row, 207, 572 + index * 17, 12, colors.white, true));
+  text("Plan reference  " + (plan.reference || "—"), 65, 633, 9, colors.muted);
+  text("Plan date  " + date, 360, 633, 9, colors.muted);
+  text("Presented by", 260, 718, 9, colors.muted);
+  text("Cliently Customer Workspace", 175, 744, 15, colors.red, true);
+  line(82, 766, 513, 766, colors.muted, 0.8);
+  text("Prepared as a planning illustration using the information provided.", 119, 782, 8, colors.muted);
+
+  startPage();
+  pageFrame(2, "Personalized business goal plan and illustrative estimates");
+  text("Goal Plan for " + (plan.customerName || "Customer"), 42, 99, 19, colors.blue, true);
+  text(plan.goal || plan.goalTitle || "Business goal", 42, 119, 11, colors.red, true);
+  text(`Plan Ref. ${plan.reference || "—"}   |   Date: ${date}`, 42, 138, 8, colors.muted);
+
+  const drawTable = (x, y, width, title, rows, labelWidth = 145) => {
+    text(title, x, y, 12, colors.red, true);
+    line(x, y + 7, x + width, y + 7, colors.line, 0.8);
+    let rowY = y + 17;
+    rows.forEach(([label, value]) => {
+      const wrapped = wrap(value, Math.max(12, Math.floor((width - labelWidth - 18) / 5)));
+      const rowHeight = Math.max(24, wrapped.length * 11 + 9);
+      rect(x, rowY, width, rowHeight, rowY % 2 ? colors.white : colors.light);
+      strokeRect(x, rowY, width, rowHeight);
+      line(x + labelWidth, rowY, x + labelWidth, rowY + rowHeight, colors.line, 0.5);
+      text(label, x + 6, rowY + 15, 8, colors.navy, true);
+      wrapped.forEach((row, index) => text(row, x + labelWidth + 7, rowY + 14 + index * 10, 8, colors.muted));
+      rowY += rowHeight;
+    });
+    return rowY;
+  };
+  const leftRows = [
+    ["Goal type", plan.goalType || "—"],
+    ["Business goal", plan.goal || "—"],
+    ["Plan duration", `${horizon} ${horizon === 1 ? "year" : "years"}`],
+    ["Present goal value", money(presentValue)],
+    ["Inflation assumption", `${inflation.toFixed(1)}%`],
+    ["Estimated future value", money(futureValue)],
+    ["Goal protection", plan.protectGoal ? "Included" : "Not selected"],
+    ["Business age", plan.businessAge ? `${plan.businessAge} years` : "Not provided"],
+  ];
+  const leftBottom = drawTable(42, 164, 250, "GOAL INFORMATION", leftRows, 121);
+  text("RISK PROFILE & ASSET ALLOCATION", 310, 164, 11, colors.red, true);
+  line(310, 171, 553, 171, colors.line, 0.8);
+  const gaugeX = 431;
+  const gaugeY = 293;
+  const gaugeSegments = [colors.blue, colors.teal, colors.gold, colors.red];
+  gaugeSegments.forEach((color, index) => arcBand(gaugeX, gaugeY, 73, 51, 180 - (index * 45), 180 - ((index + 1) * 45), color));
+  const equityGrowth = Number(plan.equityGrowth) || 0;
+  const debtGrowth = Number(plan.debtGrowth) || 0;
+  const weightedGrowth = ((equity * equityGrowth) + (debt * debtGrowth)) / 100;
+  const needleAngle = (180 - (Math.max(0, Math.min(30, weightedGrowth)) / 30 * 180)) * Math.PI / 180;
+  line(gaugeX, gaugeY, gaugeX + Math.cos(needleAngle) * 48, gaugeY - Math.sin(needleAngle) * 48, colors.navy, 3);
+  circle(gaugeX, gaugeY, 5, colors.navy, 1, true);
+  text(risk, 381, 310, 10, colors.navy, true);
+  text("CONSERVATIVE     MODERATE     GROWTH", 329, 321, 6, colors.muted, true);
+  const riskRows = [
+    ["Allocation", `Equity ${equity.toFixed(0)}%  |  Debt ${debt.toFixed(0)}%`],
+    ["Equity growth", `${Number(plan.equityGrowth) || 0}% annually`],
+    ["Debt growth", `${Number(plan.debtGrowth) || 0}% annually`],
+  ];
+  let riskY = 329;
+  riskRows.forEach(([label, value]) => {
+    rect(310, riskY, 243, 31, riskY % 2 ? colors.white : colors.light);
+    strokeRect(310, riskY, 243, 31);
+    text(label, 318, riskY + 19, 8, colors.navy, true);
+    text(value, 405, riskY + 19, 7, colors.muted);
+    riskY += 31;
+  });
+  let nextY = Math.max(leftBottom + 20, riskY + 18);
+  const investmentRows = investments.length ? investments.map((investment, index) => [
+    `Selected area ${index + 1}`,
+    investment,
+  ]) : [["Investment areas", "None selected"]];
+  nextY = drawTable(42, nextY, 511, "INVESTMENT AREAS TO DISCUSS", investmentRows, 160);
+  nextY += 20;
+  const actionRows = [
+    ["Next action", plan.action || "Not specified"],
+    ["Target date", plan.dueDate ? displayDate(plan.dueDate) : "Not specified"],
+  ];
+  if (nextY < 725) drawTable(42, nextY, 511, "ACTION SUMMARY", actionRows, 120);
+  text("Illustrative estimates only. This document is not investment, tax, or legal advice.", 42, 779, 7, colors.muted);
+  line(42, 800, 553, 800, colors.line, 0.6);
+  text("Prepared for " + (plan.customerName || "Customer"), 42, 817, 7, colors.muted);
+  text("Page 2", 520, 817, 7, colors.muted);
+
+  const rowsPerPage = 27;
+  const projectionRows = [];
+  for (let year = 0; year <= horizon; year += 1) {
+    projectionRows.push([String(year), money(presentValue * ((1 + inflation / 100) ** year))]);
+  }
+  for (let offset = 0; offset < projectionRows.length; offset += rowsPerPage) {
+    const pageNumber = pages.length + 1;
+    startPage();
+    pageFrame(pageNumber, "Year-by-year projection at the selected inflation assumption");
+    text("GOAL VALUE PROJECTION", 42, 100, 19, colors.blue, true);
+    text(`${plan.goal || "Customer goal"}  |  ${horizon}-year horizon  |  ${inflation.toFixed(1)}% annual inflation`, 42, 120, 9, colors.muted);
+    const columnX = [42, 175, 553];
+    rect(columnX[0], 145, columnX[2] - columnX[0], 28, colors.navy);
+    text("YEAR", 54, 163, 8, colors.white, true);
+    text("ESTIMATED GOAL VALUE", 189, 163, 8, colors.white, true);
+    projectionRows.slice(offset, offset + rowsPerPage).forEach(([year, amount], index) => {
+      const y = 173 + index * 21;
+      rect(42, y, 511, 21, index % 2 ? colors.white : colors.light);
+      strokeRect(42, y, 511, 21);
+      line(175, y, 175, y + 21, colors.line, 0.5);
+      text(year === "0" ? "Today" : `Year ${year}`, 54, y + 14, 8, colors.navy, year === String(horizon));
+      text(amount, 189, y + 14, 8, colors.muted, year === String(horizon));
+    });
+    text("Projection compounds the entered inflation assumption; it is not a guaranteed outcome.", 42, 770, 7, colors.muted);
+    line(42, 800, 553, 800, colors.line, 0.6);
+    text("Prepared for " + (plan.customerName || "Customer"), 42, 817, 7, colors.muted);
+    text(`Page ${pageNumber}`, 520, 817, 7, colors.muted);
+  }
+
+  const objects = [];
+  const addObject = (value) => { objects.push(value); return objects.length; };
+  addObject("<< /Type /Catalog /Pages 2 0 R >>");
+  const pageObjectIds = [];
+  addObject("");
+  const regularFontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+  const boldFontId = addObject("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+  pages.forEach((pageCommands) => {
+    const stream = pageCommands.join("\n");
+    const streamId = addObject(`<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+    const pageId = addObject(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 ${regularFontId} 0 R /F2 ${boldFontId} 0 R >> >> /Contents ${streamId} 0 R >>`);
+    pageObjectIds.push(pageId);
+  });
+  objects[1] = `<< /Type /Pages /Kids [${pageObjectIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pageObjectIds.length} >>`;
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(pdf.length);
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xrefOffset = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  offsets.slice(1).forEach((offset) => { pdf += `${String(offset).padStart(10, "0")} 00000 n \n`; });
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  return new Blob([pdf], { type: "application/pdf" });
+}
+
+function downloadGoalPlan(plan) {
+  try {
+    const blob = createGoalPlanPdf(plan);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const fileBase = pdfSafeText(`${plan.customerName || "customer"}-${plan.goalTitle || "goal-plan"}`)
+      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    link.href = url;
+    link.download = `${fileBase || "customer-goal-plan"}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) {
+    console.error("Unable to create the customer goal plan PDF.", error);
+    window.alert("The goal plan was saved, but its PDF could not be created. Use the Download PDF button to try again.");
+  }
+}
+
 const navLinks = [
   ["overview", "overview.html", "Overview"],
   ["directory", "all-customers.html", "All customers"],
@@ -455,7 +731,7 @@ function renderPlans() {
       </section>
     </form>
     <div class="content-card table-card goalplan-list-card"><div class="table-toolbar"><div class="table-title"><h2>Saved goal plans <span class="count-pill">${rows.length}</span></h2><p>Plans created for your customer accounts.</p></div></div>
-      <div class="table-scroll"><table><thead><tr><th>PLAN REF.</th><th>CUSTOMER</th><th>GOAL</th><th>GOAL TYPE</th><th>FUTURE VALUE</th><th>TARGET DATE</th></tr></thead><tbody>${rows.length ? rows.map((plan) => `<tr><td>${escapeHtml(plan.reference || "—")}</td><td>${escapeHtml(plan.customerName)}</td><td>${escapeHtml(plan.goalTitle || plan.goal || plan.objective || "—")}</td><td>${escapeHtml(plan.goalType || "—")}</td><td>${escapeHtml(plan.futureValue || "—")}</td><td>${displayDate(plan.dueDate)}</td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="6">No goal plans saved yet. Create your first plan above.</td></tr>'}</tbody></table></div></div>`);
+      <div class="table-scroll"><table><thead><tr><th>PLAN REF.</th><th>CUSTOMER</th><th>GOAL</th><th>GOAL TYPE</th><th>FUTURE VALUE</th><th>TARGET DATE</th><th>PDF</th></tr></thead><tbody>${rows.length ? rows.map((plan) => `<tr><td>${escapeHtml(plan.reference || "—")}</td><td>${escapeHtml(plan.customerName)}</td><td>${escapeHtml(plan.goalTitle || plan.goal || plan.objective || "—")}</td><td>${escapeHtml(plan.goalType || "—")}</td><td>${escapeHtml(plan.futureValue || "—")}</td><td>${displayDate(plan.dueDate)}</td><td><button class="secondary-button plan-download-button" type="button" data-download-plan="${escapeHtml(plan.id)}">Download PDF</button></td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="7">No goal plans saved yet. Create your first plan above.</td></tr>'}</tbody></table></div></div>`);
 
   let currentStep = 1;
   const form = document.getElementById("plan-form");
@@ -574,6 +850,10 @@ function renderPlans() {
   document.getElementById("plan-protect").addEventListener("change", (event) => {
     document.getElementById("plan-protect-label").textContent = event.target.checked ? "Yes" : "No";
   });
+  document.querySelectorAll("[data-download-plan]").forEach((button) => button.addEventListener("click", () => {
+    const plan = plans.find((savedPlan) => savedPlan.id === button.dataset.downloadPlan);
+    if (plan) downloadGoalPlan(plan);
+  }));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (currentStep !== 3 || !validateStep(1) || !validateStep(2)) return;
@@ -599,12 +879,17 @@ function renderPlans() {
       riskProfile: document.getElementById("plan-risk-label").textContent,
       equityAllocation: equity,
       debtAllocation: 100 - equity,
+      equityGrowth: Number(inputValue("plan-equity-growth")),
+      debtGrowth: Number(inputValue("plan-debt-growth")),
       investments: [...document.querySelectorAll('input[name="plan-investment"]:checked')].map((input) => input.value),
       action: inputValue("plan-next-action"),
       dueDate: inputValue("plan-target-date"),
     };
     plans.push(plan);
-    if (saveList(PLAN_STORAGE_KEY, plans, "customer goal plans")) renderPlans();
+    if (saveList(PLAN_STORAGE_KEY, plans, "customer goal plans")) {
+      downloadGoalPlan(plan);
+      renderPlans();
+    }
     else plans.pop();
   });
   updateRisk();
