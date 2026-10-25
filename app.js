@@ -15,12 +15,12 @@ const pageInfo = {
   overview: ["Business overview", "Overview"],
   add: ["Add customer", "Customers"],
   directory: ["All customers", "Customers"],
-  segments: ["Customer segments", "Customers"],
+  segments: ["Assign customer", "Customers"],
   unassigned: ["Unassigned customers", "Customers"],
   followups: ["Follow-ups", "Engagement"],
   interactions: ["Interactions", "Engagement"],
   reports: ["Customer reports", "Insights"],
-  plans: ["Account plans", "Engagement"],
+  plans: ["Goal plan", "Engagement"],
 };
 
 function localDate(date = new Date()) {
@@ -140,12 +140,12 @@ const navLinks = [
   ["overview", "overview.html", "Overview"],
   ["directory", "all-customers.html", "All customers"],
   ["add", "add-customer.html", "Add customer"],
-  ["segments", "customer-segments.html", "Customer segments"],
+  ["segments", "customer-segments.html", "Assign customer"],
   ["unassigned", "unassigned-customers.html", "Unassigned customers"],
   ["followups", "follow-ups.html", "Follow-ups"],
   ["interactions", "interactions.html", "Interactions"],
   ["reports", "reports.html", "Customer reports"],
-  ["plans", "account-plans.html", "Account plans"],
+  ["plans", "account-plans.html", "Goal plan"],
 ];
 
 function renderShell(page, content) {
@@ -256,8 +256,8 @@ function renderSegments(unassignedOnly = false) {
   const page = unassignedOnly ? "unassigned" : "segments";
   const listed = customers.filter((customer) => !unassignedOnly || !customer.segment);
   renderShell(page, `
-    ${pageHeading(unassignedOnly ? "CUSTOMER SEGMENTS" : "CUSTOMER MANAGEMENT", unassignedOnly ? "Unassigned customers" : "Customer segments", unassignedOnly ? "Add these customers to a segment to organize your relationships." : "Organize customer accounts by industry, type, or any category that fits your business.")}
-    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>${unassignedOnly ? "Customers to assign" : "Manage customer segments"} <span class="count-pill">${listed.length}</span></h2><p>Update a customer's segment directly below.</p></div><span class="demo-tag">SAVED IN THIS BROWSER</span></div>
+    ${pageHeading(unassignedOnly ? "CUSTOMER SEGMENTS" : "CUSTOMER MANAGEMENT", unassignedOnly ? "Unassigned customers" : "Assign customer", unassignedOnly ? "Add these customers to a segment to organize your relationships." : "Assign customers to business segments to organize your relationships.")}
+    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>${unassignedOnly ? "Customers to assign" : "Customers and segments"} <span class="count-pill">${listed.length}</span></h2><p>Choose a segment for each customer.</p></div><span class="demo-tag">SAVED IN THIS BROWSER</span></div>
       <div class="table-scroll"><table><thead><tr><th>CUSTOMER</th><th>COMPANY</th><th>EMAIL</th><th>SEGMENT</th><th>STATUS</th></tr></thead><tbody>${listed.length ? listed.map((customer, index) => `<tr><td>${customerName(customer, index)}</td><td>${escapeHtml(customer.company || "—")}</td><td>${escapeHtml(customer.email || "—")}</td><td><input class="segment-input" data-segment-customer="${escapeHtml(customer.id)}" value="${escapeHtml(customer.segment)}" placeholder="Enter a segment" aria-label="Segment for ${escapeHtml(customer.name)}" /></td><td><span class="status-tag">${escapeHtml(customer.status)}</span></td></tr>`).join("") : `<tr><td class="empty-state-cell" colspan="5">${unassignedOnly ? "All customers have a segment." : "No customer records yet."}</td></tr>`}</tbody></table></div>
     </div>`);
   document.querySelectorAll("[data-segment-customer]").forEach((input) => {
@@ -359,33 +359,255 @@ function renderReports() {
 }
 
 function renderPlans() {
-  const rows = [...plans].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  const rows = [...plans].sort((a, b) => String(a.dueDate || "").localeCompare(String(b.dueDate || "")));
   renderShell("plans", `
-    ${pageHeading("CUSTOMER ENGAGEMENT", "Account plans", "Set a clear objective and next action for important customer relationships.")}
-    <form class="content-card student-form" id="plan-form"><div class="form-grid">
-      <div class="form-field"><label for="plan-customer">Customer <span>*</span></label>${customerSelect("plan-customer")}</div>
-      <div class="form-field"><label for="plan-objective">Account objective <span>*</span></label><input id="plan-objective" placeholder="e.g. Renew annual service agreement" required /></div>
-      <div class="form-field"><label for="plan-action">Next action</label><input id="plan-action" placeholder="e.g. Schedule quarterly review" /></div>
-      <div class="form-field"><label for="plan-date">Target date</label><input id="plan-date" type="date" /></div>
-    </div><div class="form-actions"><button class="primary-button" type="submit">Save account plan →</button></div></form>
-    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Customer account plans</h2><p>Objectives and next steps for your customer accounts.</p></div></div>
-      <div class="table-scroll"><table><thead><tr><th>CUSTOMER</th><th>OBJECTIVE</th><th>NEXT ACTION</th><th>TARGET DATE</th></tr></thead><tbody>${rows.length ? rows.map((plan) => `<tr><td>${escapeHtml(plan.customerName)}</td><td>${escapeHtml(plan.objective)}</td><td>${escapeHtml(plan.action || "—")}</td><td>${displayDate(plan.dueDate)}</td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="4">No account plans created yet.</td></tr>'}</tbody></table></div></div>`);
-  document.getElementById("plan-form").addEventListener("submit", (event) => {
+    ${pageHeading("CUSTOMER ENGAGEMENT", "Goal plan", "Build a thoughtful financial plan for a customer, one step at a time.")}
+    <form class="content-card goalplan-form" id="plan-form">
+      <div class="goalplan-form-intro"><div><span class="eyebrow">CUSTOMER FINANCIAL PLANNING</span><h2>Create goal plan</h2><p>Enter customer details, explore a suitable plan, and review the summary before saving.</p></div></div>
+      <nav class="goalplan-steps" aria-label="Goal plan steps">
+        <button class="goalplan-step is-active" type="button" data-plan-step="1" aria-current="step"><span>01</span><span>Goal Information</span></button>
+        <span class="goalplan-step-connector" aria-hidden="true"></span>
+        <button class="goalplan-step" type="button" data-plan-step="2"><span>02</span><span>Investment Recommendation</span></button>
+        <span class="goalplan-step-connector" aria-hidden="true"></span>
+        <button class="goalplan-step" type="button" data-plan-step="3"><span>03</span><span>Action Summary</span></button>
+      </nav>
+
+      <section class="goalplan-form-section goalplan-step-panel" data-plan-panel="1" aria-labelledby="plan-customer-heading">
+        <div class="form-section-heading"><span class="form-step">01</span><div><h2 id="plan-customer-heading">Customer &amp; goal information</h2><p>Choose the customer and define the goal this plan will support.</p></div></div>
+        <div class="plan-customer-fields">
+          <div class="form-field"><label for="plan-reference">Plan reference</label><input id="plan-reference" value="GP-${Date.now().toString().slice(-6)}" readonly /></div>
+          <div class="form-field"><label for="plan-date">Plan date <span>*</span></label><input id="plan-date" type="date" value="${today}" required /></div>
+          <div class="form-field"><label for="plan-customer">Customer name <span>*</span></label>${customerSelect("plan-customer")}</div>
+          <div class="form-field"><label for="plan-business-age">Business age (years)</label><input id="plan-business-age" type="number" min="0" max="200" placeholder="Optional" /></div>
+          <fieldset class="plan-goal-type"><legend>Goal type</legend>
+            <label><input type="radio" name="plan-type" value="Lump sum" checked /><span>Lump sum</span></label>
+            <label><input type="radio" name="plan-type" value="Regular income" /><span>Regular income</span></label>
+            <label><input type="radio" name="plan-type" value="Multiple goals" /><span>Multiple goals</span></label>
+          </fieldset>
+          <div class="form-field"><label for="plan-title">Goal title <span>*</span></label><input id="plan-title" placeholder="e.g. Expand business operations" required /></div>
+        </div>
+        <div class="goalplan-focus">
+          <div class="goalplan-focus-heading"><div><h3>Select a business goal</h3><p>Choose the outcome this plan is designed to support.</p></div></div>
+          <div class="goalplan-goal-options">
+            <label class="goalplan-goal-option"><input type="radio" name="plan-goal" value="Business expansion" required /><span class="goalplan-goal-icon" aria-hidden="true">↗</span><b>Business expansion</b></label>
+            <label class="goalplan-goal-option"><input type="radio" name="plan-goal" value="Cash flow" /><span class="goalplan-goal-icon" aria-hidden="true">₹</span><b>Cash flow</b></label>
+            <label class="goalplan-goal-option"><input type="radio" name="plan-goal" value="Equipment purchase" /><span class="goalplan-goal-icon" aria-hidden="true">⚙</span><b>Equipment purchase</b></label>
+            <label class="goalplan-goal-option"><input type="radio" name="plan-goal" value="Business property" /><span class="goalplan-goal-icon" aria-hidden="true">⌂</span><b>Business property</b></label>
+            <label class="goalplan-goal-option"><input type="radio" name="plan-goal" value="Retirement income" /><span class="goalplan-goal-icon" aria-hidden="true">◷</span><b>Retirement income</b></label>
+          </div>
+        </div>
+        <div class="goalplan-panel-actions"><span class="plan-step-hint">Step 1 of 3 · Your information stays in this browser.</span><button class="primary-button" type="button" data-plan-next="2">Investment recommendation <span>→</span></button></div>
+      </section>
+
+      <section class="goalplan-form-section goalplan-step-panel" data-plan-panel="2" aria-labelledby="plan-investment-heading" hidden>
+        <div class="form-section-heading"><span class="form-step">02</span><div><h2 id="plan-investment-heading">Investment recommendation</h2><p>Estimate the future goal value and explore an illustrative allocation.</p></div></div>
+        <section class="goalplan-planning-section goalplan-horizon-section" aria-labelledby="plan-horizon-heading">
+          <div class="goalplan-horizon-heading"><div><h3 id="plan-horizon-heading">When would you like to reach this goal?</h3><p>Set the investment time horizon.</p></div><output id="plan-horizon-value" for="plan-horizon">13 years</output></div>
+          <input class="goalplan-range" id="plan-horizon" type="range" min="1" max="100" value="13" />
+          <div class="goalplan-range-labels"><span>1 year</span><span>50 years</span><span>100 years</span></div>
+        </section>
+        <section class="goalplan-planning-section" aria-label="Goal value and protection">
+          <div class="goalplan-value-grid">
+            <div class="form-field"><label for="plan-present-value">Present value of the goal <span>*</span></label><div class="goalplan-currency-control"><span aria-hidden="true">₹</span><input id="plan-present-value" type="number" min="1" step="0.01" placeholder="e.g. 600000" required /></div></div>
+            <div class="form-field"><label for="plan-inflation">Inflation rate</label><div class="goalplan-stepper"><button type="button" data-inflation-step="-0.5" aria-label="Decrease inflation rate">−</button><input id="plan-inflation" type="number" min="0" max="20" step="0.5" value="6" /><span>%</span><button type="button" data-inflation-step="0.5" aria-label="Increase inflation rate">＋</button></div></div>
+            <div class="form-field"><label for="plan-future-value">Estimated future value</label><div class="goalplan-currency-control"><span aria-hidden="true">₹</span><input id="plan-future-value" type="text" placeholder="Enter present value" readonly /></div></div>
+          </div>
+          <div class="goalplan-protection-row"><div><b>Protect this goal</b><small>Include a protection buffer in the financial estimate.</small></div><label class="goalplan-switch"><input id="plan-protect" type="checkbox" checked /><span></span><b id="plan-protect-label">Yes</b></label></div>
+        </section>
+        <section class="goalplan-planning-section goalplan-risk-card" aria-labelledby="plan-risk-heading">
+          <div class="goalplan-subsection-heading"><div><h3 id="plan-risk-heading">Risk profile &amp; asset allocation</h3><p>Illustrative estimate based on the growth assumptions below.</p></div><span class="optional-label">ESTIMATE</span></div>
+          <div class="goalplan-risk-layout">
+            <div class="goalplan-risk-visual" aria-live="polite"><div class="goalplan-risk-meter"><div class="goalplan-risk-meter-heading"><span>Illustrative risk profile</span><b id="plan-risk-label">Balanced</b></div><div class="goalplan-risk-meter-track" role="meter" aria-label="Estimated weighted growth" aria-valuemin="0" aria-valuemax="30" aria-valuenow="11"><span id="plan-risk-needle"></span></div><div class="goalplan-risk-meter-labels"><span>Conservative</span><span>Balanced</span><span>Growth</span></div><p id="plan-risk-description">Estimated weighted growth: 11.0%.</p></div><small>This is an illustration only, not financial advice.</small></div>
+            <div class="goalplan-risk-fields">
+              <div class="goalplan-allocation-heading"><div><b>Asset allocation</b><span>Adjust the illustrative mix</span></div><span class="goalplan-allocation-total" id="plan-allocation-total">100% allocated</span></div>
+              <div class="goalplan-allocation-values"><div><i class="goalplan-allocation-dot goalplan-equity-dot"></i>Equity <b id="plan-equity-value">40</b>%</div><div><i class="goalplan-allocation-dot goalplan-debt-dot"></i>Debt <b id="plan-debt-value">60</b>%</div></div>
+              <input class="goalplan-allocation-meter" id="plan-equity" type="range" min="0" max="100" value="40" aria-label="Equity allocation percentage" />
+              <div class="goalplan-risk-growth"><div class="goalplan-risk-field-heading"><span>Estimated growth rate</span><b>Annual</b></div>
+                <div class="goalplan-risk-field"><span>Equity</span><label class="goalplan-percent-control"><input id="plan-equity-growth" type="number" min="0" max="30" step="0.5" value="14" aria-label="Estimated equity growth" /><span>%</span></label></div>
+                <div class="goalplan-risk-field"><span>Debt</span><label class="goalplan-percent-control"><input id="plan-debt-growth" type="number" min="0" max="30" step="0.5" value="9" aria-label="Estimated debt growth" /><span>%</span></label></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="goalplan-planning-section">
+          <div class="goalplan-subsection-heading"><div><h3>Investments earmarked for this goal</h3><p>Select the investment areas to discuss with your customer.</p></div><span class="optional-label">OPTIONAL</span></div>
+          <div class="goalplan-investment-options">
+            <label><input type="checkbox" name="plan-investment" value="Mutual funds" /><span>Mutual funds</span></label>
+            <label><input type="checkbox" name="plan-investment" value="Fixed deposits" /><span>Fixed deposits</span></label>
+            <label><input type="checkbox" name="plan-investment" value="Government bonds" /><span>Government bonds</span></label>
+            <label><input type="checkbox" name="plan-investment" value="Equity" /><span>Equity</span></label>
+            <label><input type="checkbox" name="plan-investment" value="Gold" /><span>Gold</span></label>
+            <label><input type="checkbox" name="plan-investment" value="Other" /><span>Other</span></label>
+          </div>
+        </section>
+        <div class="goalplan-panel-actions"><button class="secondary-button" type="button" data-plan-back="1">← Goal information</button><button class="primary-button" type="button" data-plan-next="3">Review action summary <span>→</span></button></div>
+      </section>
+
+      <section class="goalplan-form-section goalplan-step-panel" data-plan-panel="3" aria-labelledby="plan-summary-heading" hidden>
+        <div class="form-section-heading"><span class="form-step">03</span><div><h2 id="plan-summary-heading">Action summary</h2><p>Review the plan details before saving it to this customer account.</p></div></div>
+        <div class="goalplan-summary" id="plan-summary"></div>
+        <div class="form-grid plan-action-fields">
+          <div class="form-field"><label for="plan-next-action">Next action</label><input id="plan-next-action" placeholder="e.g. Schedule a review with the customer" /></div>
+          <div class="form-field"><label for="plan-target-date">Target date</label><input id="plan-target-date" type="date" /></div>
+        </div>
+        <div class="goalplan-payment-note"><span aria-hidden="true">i</span><p>Estimates are illustrative and do not create or execute any investment or financial product.</p></div>
+        <div class="goalplan-panel-actions"><button class="secondary-button" type="button" data-plan-back="2">← Investment recommendation</button><button class="primary-button" type="submit">Save goal plan <span>✓</span></button></div>
+      </section>
+    </form>
+    <div class="content-card table-card goalplan-list-card"><div class="table-toolbar"><div class="table-title"><h2>Saved goal plans <span class="count-pill">${rows.length}</span></h2><p>Plans created for your customer accounts.</p></div></div>
+      <div class="table-scroll"><table><thead><tr><th>PLAN REF.</th><th>CUSTOMER</th><th>GOAL</th><th>GOAL TYPE</th><th>FUTURE VALUE</th><th>TARGET DATE</th></tr></thead><tbody>${rows.length ? rows.map((plan) => `<tr><td>${escapeHtml(plan.reference || "—")}</td><td>${escapeHtml(plan.customerName)}</td><td>${escapeHtml(plan.goalTitle || plan.goal || plan.objective || "—")}</td><td>${escapeHtml(plan.goalType || "—")}</td><td>${escapeHtml(plan.futureValue || "—")}</td><td>${displayDate(plan.dueDate)}</td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="6">No goal plans saved yet. Create your first plan above.</td></tr>'}</tbody></table></div></div>`);
+
+  let currentStep = 1;
+  const form = document.getElementById("plan-form");
+  const money = (value) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(value);
+  const inputValue = (id) => document.getElementById(id).value.trim();
+  const planValue = () => {
+    const amount = Number(inputValue("plan-present-value"));
+    const inflation = Number(inputValue("plan-inflation"));
+    const horizon = Number(document.getElementById("plan-horizon").value);
+    return amount * ((1 + inflation / 100) ** horizon);
+  };
+  const updateFutureValue = () => {
+    const amount = Number(inputValue("plan-present-value"));
+    document.getElementById("plan-future-value").value = Number.isFinite(amount) && amount > 0 ? money(planValue()) : "";
+  };
+  const updateRisk = () => {
+    const equity = Number(document.getElementById("plan-equity").value);
+    const debt = 100 - equity;
+    const equityGrowth = Number(inputValue("plan-equity-growth"));
+    const debtGrowth = Number(inputValue("plan-debt-growth"));
+    const growthFields = [document.getElementById("plan-equity-growth"), document.getElementById("plan-debt-growth")];
+    const valid = growthFields.every((field) => field.checkValidity() && Number.isFinite(Number(field.value)));
+    document.getElementById("plan-equity-value").textContent = equity;
+    document.getElementById("plan-debt-value").textContent = debt;
+    document.getElementById("plan-equity").style.setProperty("--equity-share", `${equity}%`);
+    const weighted = ((equity * equityGrowth) + (debt * debtGrowth)) / 100;
+    const profile = !valid ? "Check growth rates" : weighted < 8 ? "Conservative" : weighted < 12 ? "Balanced" : "Growth-focused";
+    document.getElementById("plan-risk-label").textContent = profile;
+    document.getElementById("plan-risk-description").textContent = valid ? `Estimated weighted growth: ${weighted.toFixed(1)}%.` : "Enter growth rates from 0% to 30%.";
+    const meter = document.querySelector(".goalplan-risk-meter-track");
+    meter.setAttribute("aria-valuenow", valid ? weighted.toFixed(1) : "0");
+    meter.setAttribute("aria-valuetext", valid ? `${profile}: ${weighted.toFixed(1)}% estimated weighted growth` : "Growth assumptions are invalid");
+    document.getElementById("plan-risk-needle").style.left = `${valid ? Math.min(100, weighted / 30 * 100) : 0}%`;
+    document.getElementById("plan-allocation-total").textContent = "100% allocated";
+    return valid;
+  };
+  const updateSummary = () => {
+    const customer = customerById(inputValue("plan-customer"));
+    const horizon = Number(document.getElementById("plan-horizon").value);
+    const equity = Number(document.getElementById("plan-equity").value);
+    const weighted = ((equity * Number(inputValue("plan-equity-growth"))) + ((100 - equity) * Number(inputValue("plan-debt-growth")))) / 100;
+    const fields = [
+      ["Plan reference", inputValue("plan-reference")],
+      ["Plan date", displayDate(inputValue("plan-date"))],
+      ["Customer", customer ? `${customer.name}${customer.company ? ` · ${customer.company}` : ""}` : "—"],
+      ["Business age", inputValue("plan-business-age") ? `${inputValue("plan-business-age")} years` : "Not provided"],
+      ["Goal type", document.querySelector('input[name="plan-type"]:checked').value],
+      ["Goal title", inputValue("plan-title")],
+      ["Business goal", document.querySelector('input[name="plan-goal"]:checked')?.value || "—"],
+      ["Time horizon", `${horizon} ${horizon === 1 ? "year" : "years"}`],
+      ["Present goal value", money(Number(inputValue("plan-present-value")))],
+      ["Inflation assumption", `${inputValue("plan-inflation")}%`],
+      ["Estimated future value", money(planValue())],
+      ["Goal protection", document.getElementById("plan-protect").checked ? "Yes" : "No"],
+      ["Risk profile", `${weighted < 8 ? "Conservative" : weighted < 12 ? "Balanced" : "Growth-focused"} · ${weighted.toFixed(1)}% estimated growth`],
+      ["Asset allocation", `Equity ${equity}% · Debt ${100 - equity}%`],
+      ["Investment areas", [...document.querySelectorAll('input[name="plan-investment"]:checked')].map((input) => input.value).join(", ") || "Not selected"],
+    ];
+    document.getElementById("plan-summary").innerHTML = fields.map(([label, value]) => `<div class="goalplan-summary-item"><span>${escapeHtml(label)}</span><b>${escapeHtml(value)}</b></div>`).join("");
+  };
+  const showStep = (step) => {
+    currentStep = step;
+    form.querySelectorAll("[data-plan-panel]").forEach((panel) => { panel.hidden = panel.dataset.planPanel !== String(step); });
+    form.querySelectorAll("[data-plan-step]").forEach((button) => {
+      const number = Number(button.dataset.planStep);
+      button.classList.toggle("is-active", number === step);
+      button.classList.toggle("is-complete", number < step);
+      if (number === step) button.setAttribute("aria-current", "step");
+      else button.removeAttribute("aria-current");
+    });
+    if (step === 3) updateSummary();
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const validateStep = (step) => {
+    const panel = form.querySelector(`[data-plan-panel="${step}"]`);
+    const invalid = [...panel.querySelectorAll("input[required], select[required]")].find((field) => !field.checkValidity());
+    if (invalid) {
+      invalid.reportValidity();
+      invalid.focus();
+      return false;
+    }
+    if (step === 2 && !updateRisk()) {
+      document.getElementById("plan-equity-growth").reportValidity();
+      return false;
+    }
+    return true;
+  };
+
+  form.querySelectorAll("[data-plan-next]").forEach((button) => button.addEventListener("click", () => {
+    if (validateStep(currentStep)) showStep(Number(button.dataset.planNext));
+  }));
+  form.querySelectorAll("[data-plan-back]").forEach((button) => button.addEventListener("click", () => showStep(Number(button.dataset.planBack))));
+  form.querySelectorAll("[data-plan-step]").forEach((button) => button.addEventListener("click", () => {
+    const target = Number(button.dataset.planStep);
+    if (target <= currentStep) {
+      showStep(target);
+      return;
+    }
+    for (let step = currentStep; step < target; step += 1) {
+      if (!validateStep(step)) return;
+    }
+    showStep(target);
+  }));
+  document.getElementById("plan-horizon").addEventListener("input", (event) => {
+    const years = Number(event.target.value);
+    document.getElementById("plan-horizon-value").textContent = `${years} ${years === 1 ? "year" : "years"}`;
+    updateFutureValue();
+  });
+  ["plan-present-value", "plan-inflation"].forEach((id) => document.getElementById(id).addEventListener("input", updateFutureValue));
+  document.querySelectorAll("[data-inflation-step]").forEach((button) => button.addEventListener("click", () => {
+    const field = document.getElementById("plan-inflation");
+    field.value = String(Math.max(0, Math.min(20, Number(field.value) + Number(button.dataset.inflationStep))));
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  }));
+  ["plan-equity", "plan-equity-growth", "plan-debt-growth"].forEach((id) => document.getElementById(id).addEventListener("input", updateRisk));
+  document.getElementById("plan-protect").addEventListener("change", (event) => {
+    document.getElementById("plan-protect-label").textContent = event.target.checked ? "Yes" : "No";
+  });
+  form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const customer = customerById(document.getElementById("plan-customer").value);
+    if (currentStep !== 3 || !validateStep(1) || !validateStep(2)) return;
+    const customer = customerById(inputValue("plan-customer"));
     if (!customer) return;
+    const equity = Number(document.getElementById("plan-equity").value);
     const plan = {
       id: `PLAN-${Date.now()}`,
+      reference: inputValue("plan-reference"),
+      planDate: inputValue("plan-date"),
       customerId: customer.id,
       customerName: customer.name,
-      objective: document.getElementById("plan-objective").value.trim(),
-      action: document.getElementById("plan-action").value.trim(),
-      dueDate: document.getElementById("plan-date").value,
+      company: customer.company,
+      businessAge: inputValue("plan-business-age"),
+      goalType: document.querySelector('input[name="plan-type"]:checked').value,
+      goalTitle: inputValue("plan-title"),
+      goal: document.querySelector('input[name="plan-goal"]:checked').value,
+      horizon: Number(document.getElementById("plan-horizon").value),
+      presentValue: Number(inputValue("plan-present-value")),
+      inflation: Number(inputValue("plan-inflation")),
+      futureValue: money(planValue()),
+      protectGoal: document.getElementById("plan-protect").checked,
+      riskProfile: document.getElementById("plan-risk-label").textContent,
+      equityAllocation: equity,
+      debtAllocation: 100 - equity,
+      investments: [...document.querySelectorAll('input[name="plan-investment"]:checked')].map((input) => input.value),
+      action: inputValue("plan-next-action"),
+      dueDate: inputValue("plan-target-date"),
     };
     plans.push(plan);
-    if (saveList(PLAN_STORAGE_KEY, plans, "customer account plans")) renderPlans();
+    if (saveList(PLAN_STORAGE_KEY, plans, "customer goal plans")) renderPlans();
     else plans.pop();
   });
+  updateRisk();
 }
 
 function exportCustomers() {

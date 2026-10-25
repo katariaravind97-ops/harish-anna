@@ -23,6 +23,19 @@ textarea { font: inherit; }
 .segment-input { min-width: 150px; padding: 8px 10px; border: 1px solid #e4e8ef; border-radius: 6px; }
 .form-field textarea { width: 100%; min-height: 80px; padding: 11px 12px; border: 1px solid #e4e8ef; border-radius: 6px; color: #26334a; background: #fff; font-size: 12px; resize: vertical; }
 .form-field textarea:focus { border-color: #6f91dc; outline: none; box-shadow: 0 0 0 3px rgba(64, 105, 195, .1); }
+.plan-customer-fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: 14px; }
+.plan-customer-fields .form-field input, .plan-customer-fields .form-field select { width: 100%; }
+.plan-goal-type { display: flex; min-width: 0; grid-column: span 2; margin: 0; padding: 0; border: 0; }
+.plan-goal-type legend { margin-bottom: 7px; color: #3a465b; font-size: 11px; font-weight: 700; }
+.plan-goal-type label { flex: 1; cursor: pointer; }
+.plan-goal-type input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.plan-goal-type label span { display: grid; min-height: 39px; place-items: center; padding: 7px 9px; border: 1px solid #e1e7f0; border-right: 0; color: #64738a; background: #fff; font-size: 10px; text-align: center; }
+.plan-goal-type label:first-of-type span { border-radius: 6px 0 0 6px; }
+.plan-goal-type label:last-of-type span { border-right: 1px solid #e1e7f0; border-radius: 0 6px 6px 0; }
+.plan-goal-type input:checked + span { position: relative; z-index: 1; border-color: #315da8; color: #fff; background: #315da8; }
+.plan-goal-type input:focus-visible + span { outline: 3px solid #91b8ff; outline-offset: 2px; }
+.plan-step-hint { color: #8b97a9; font-size: 10px; }
+.plan-action-fields { margin-top: 18px; }
 
 /* Sign in */
 .login-screen { display: grid; grid-template-columns: minmax(420px, 45%) 1fr; min-height: 100vh; background: #fff; }
@@ -547,6 +560,52 @@ body[data-page="goalplan"] .nav-goalplan .nav-icon { color: #9be2c1; }
 .goalplan-currency-control > span { position: absolute; left: 11px; z-index: 1; color: #7d899c; font-size: 12px; }
 .goalplan-currency-control input { padding-left: 28px; }
 .goalplan-form > .demo-note { margin: -4px 0 0; }
+.goalplan-step-panel[hidden] { display: none; }
+.goalplan-step-panel { min-width: 0; }
+.goalplan-steps { gap: 8px; }
+.goalplan-step { gap: 7px; }
+.goalplan-step > span:last-child { white-space: normal; }
+.goalplan-step:focus-visible { outline: 3px solid #91b8ff; outline-offset: 3px; border-radius: 5px; }
+.goalplan-step-panel .form-section-heading { margin-bottom: 20px; }
+.goalplan-step-panel .goalplan-panel-actions { flex-wrap: wrap; }
+.goalplan-step-panel .goalplan-panel-actions > button { min-height: 40px; }
+.goalplan-step-panel .goalplan-form-section { margin: 0; }
+.goalplan-step-panel .goalplan-planning-section { margin-top: 15px; }
+.goalplan-step-panel .goalplan-goal-options { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.goalplan-step-panel .goalplan-risk-layout { grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); }
+.goalplan-step-panel .goalplan-value-grid { grid-template-columns: minmax(0, 1fr) minmax(140px, .75fr) minmax(0, 1fr); }
+.plan-action-fields .form-field { min-width: 0; }
+.plan-action-fields .form-field input { width: 100%; }
+.goalplan-list-card { margin-top: 22px; }
+.goalplan-list-card .table-toolbar { padding: 17px 18px; }
+@media (max-width: 900px) {
+  .plan-customer-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .plan-goal-type { grid-column: span 2; }
+  .goalplan-step-panel .goalplan-goal-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .goalplan-step-panel .goalplan-risk-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .goalplan-form { gap: 15px; padding: 16px; }
+  .goalplan-steps { align-items: flex-start; gap: 5px; }
+  .goalplan-step { flex: 1; flex-direction: column; align-items: flex-start; gap: 5px; }
+  .goalplan-step > span:last-child { font-size: 9px; line-height: 1.35; }
+  .goalplan-step-connector { min-width: 7px; margin-top: 15px; }
+  .plan-customer-fields { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .plan-goal-type { grid-column: 1 / -1; flex-wrap: wrap; }
+  .plan-goal-type label span { min-height: 42px; padding: 6px 4px; font-size: 9px; }
+  .goalplan-step-panel .goalplan-goal-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .goalplan-step-panel .goalplan-value-grid { grid-template-columns: 1fr; gap: 12px; }
+  .goalplan-step-panel .goalplan-panel-actions { align-items: stretch; }
+  .goalplan-step-panel .goalplan-panel-actions > button { flex: 1 1 100%; }
+  .plan-step-hint { flex-basis: 100%; }
+  .goalplan-step-panel .goalplan-summary { grid-template-columns: 1fr; }
+  .goalplan-step-panel .goalplan-summary-item,
+  .goalplan-step-panel .goalplan-summary-item:nth-child(odd) { border-right: 0; }
+  .goalplan-step-panel .goalplan-summary-item:nth-last-child(2) { border-bottom: 1px solid #edf0f5; }
+  .goalplan-step-panel .goalplan-summary-item:last-child { border-bottom: 0; }
+  .goalplan-step-panel .goalplan-risk-fields { padding: 13px; }
+  .plan-action-fields { grid-template-columns: 1fr; }
+}
 .goalplan-payment-note { display: flex; align-items: flex-start; gap: 9px; margin-top: 18px; padding: 11px 13px; border: 1px solid #e5edf9; border-radius: 7px; color: #6b7a91; background: #f7faff; }
 .goalplan-payment-note > span { display: grid; width: 17px; height: 17px; flex: 0 0 17px; place-items: center; border-radius: 50%; color: #4267a7; background: #e5edfc; font-size: 10px; font-weight: 700; }
 .goalplan-payment-note p { margin: 1px 0 0; font-size: 9px; line-height: 1.5; }
