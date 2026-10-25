@@ -1,17 +1,18 @@
-# harish-anna
-a website is done for my brother
+# Cliently
+
+Cliently is a browser-based business workspace for managing customer records and relationships. Records are stored locally in this browser.
 
 ## Pages
 
-- [index.html](./index.html) — sign-in
-- [overview.html](./overview.html) — school overview
-- [add-student.html](./add-student.html) — add a student
-- [group-students.html](./group-students.html) — assign students to a class
-- [ungrouped-students.html](./ungrouped-students.html) — manage ungrouped students
-- [all-students.html](./all-students.html) — student directory
-- [attendance.html](./attendance.html) — daily attendance
-- [marks.html](./marks.html) — marks and exams
-- [reports.html](./reports.html) — student reports
-- [goalplan.html](./goalplan.html) — create and view student goalplans with course payments, goal projections up to 100 years, interactive allocation, risk estimates, and investment preferences
+- [index.html](./index.html) — business workspace sign-in
+- [overview.html](./overview.html) — customer and follow-up overview
+- [add-customer.html](./add-customer.html) — create a customer record
+- [all-customers.html](./all-customers.html) — search, filter, remove, and export customers
+- [customer-segments.html](./customer-segments.html) — organize customer records into segments
+- [unassigned-customers.html](./unassigned-customers.html) — assign customers to segments
+- [follow-ups.html](./follow-ups.html) — schedule and complete follow-ups
+- [interactions.html](./interactions.html) — log calls, emails, and meetings
+- [reports.html](./reports.html) — customer status and segment reports
+- [account-plans.html](./account-plans.html) — track customer account objectives and next actions
 
-All pages share `styles.css` and `app.js`. Student records, goalplans, and the signed-in display name remain saved in this browser.
+All workspace pages share `styles.css` and `app.js`. Customer records, interactions, and account plans are saved in this browser. Existing locally saved customer contact details are migrated from earlier versions when possible.

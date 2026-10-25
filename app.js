@@ -1,97 +1,33 @@
-const STORAGE_KEY = "campusly-school-records-v2";
-const GOALPLAN_STORAGE_KEY = "campusly-goalplans-v1";
-const demoStudents = [
-  { id: "STU-1024", name: "Aarav Sharma", email: "aarav.sharma@northview.edu", phone: "", guardian: "Raj Sharma", dob: "", className: "10th", section: "A", added: "2026-10-20", attendance: {}, marks: [] },
-  { id: "STU-1023", name: "Ananya Patel", email: "ananya.patel@northview.edu", phone: "", guardian: "Neha Patel", dob: "", className: "11th", section: "B", added: "2026-10-19", attendance: {}, marks: [] },
-  { id: "STU-1022", name: "Ishaan Reddy", email: "ishaan.reddy@northview.edu", phone: "", guardian: "S. Reddy", dob: "", className: "12th", section: "A", added: "2026-10-18", attendance: {}, marks: [] },
-  { id: "STU-1021", name: "Meera Iyer", email: "meera.iyer@northview.edu", phone: "", guardian: "Priya Iyer", dob: "", className: "10th", section: "B", added: "2026-10-17", attendance: {}, marks: [] },
-  { id: "STU-1020", name: "Kabir Singh", email: "kabir.singh@northview.edu", phone: "", guardian: "", dob: "", className: "", section: "", added: "2026-10-16", attendance: {}, marks: [] },
-  { id: "STU-1019", name: "Diya Nair", email: "diya.nair@northview.edu", phone: "", guardian: "", dob: "", className: "", section: "", added: "2026-10-15", attendance: {}, marks: [] },
-  { id: "STU-1018", name: "Arjun Rao", email: "arjun.rao@northview.edu", phone: "", guardian: "", dob: "", className: "", section: "", added: "2026-10-14", attendance: {}, marks: [] },
-  { id: "STU-1017", name: "Sana Khan", email: "sana.khan@northview.edu", phone: "", guardian: "", dob: "", className: "", section: "", added: "2026-10-13", attendance: {}, marks: [] },
+const CUSTOMER_STORAGE_KEY = "cliently-customers-v1";
+const INTERACTION_STORAGE_KEY = "cliently-interactions-v1";
+const PLAN_STORAGE_KEY = "cliently-account-plans-v1";
+const OLD_CUSTOMER_KEYS = ["campusly-school-records-v2", "campusly-students-v1"];
+
+const demoCustomers = [
+  { id: "CUS-1024", name: "Aarav Sharma", company: "Northstar Studio", email: "aarav@example.com", phone: "+91 98765 43210", segment: "Technology", status: "Active", notes: "", added: "2026-10-20", nextFollowUp: "" },
+  { id: "CUS-1023", name: "Ananya Patel", company: "Evergreen Retail", email: "ananya@example.com", phone: "+91 98765 43211", segment: "Retail", status: "Active", notes: "", added: "2026-10-19", nextFollowUp: "" },
+  { id: "CUS-1022", name: "Ishaan Reddy", company: "Reddy Consulting", email: "ishaan@example.com", phone: "+91 98765 43212", segment: "Professional services", status: "Prospective", notes: "", added: "2026-10-18", nextFollowUp: "" },
+  { id: "CUS-1021", name: "Meera Iyer", company: "Meera & Co.", email: "meera@example.com", phone: "+91 98765 43213", segment: "Retail", status: "Active", notes: "", added: "2026-10-17", nextFollowUp: "" },
+  { id: "CUS-1020", name: "Kabir Singh", company: "Singh Logistics", email: "kabir@example.com", phone: "+91 98765 43214", segment: "", status: "Prospective", notes: "", added: "2026-10-16", nextFollowUp: "" },
 ];
 
-const today = localDate();
-const students = loadStudents();
-const loginForm = document.getElementById("login-form");
-const pageFiles = {
-  overview: "overview.html",
-  add: "add-student.html",
-  groups: "group-students.html",
-  ungrouped: "ungrouped-students.html",
-  directory: "all-students.html",
-  attendance: "attendance.html",
-  marks: "marks.html",
-  reports: "reports.html",
-  goalplan: "goalplan.html",
+const pageInfo = {
+  overview: ["Business overview", "Overview"],
+  add: ["Add customer", "Customers"],
+  directory: ["All customers", "Customers"],
+  segments: ["Customer segments", "Customers"],
+  unassigned: ["Unassigned customers", "Customers"],
+  followups: ["Follow-ups", "Engagement"],
+  interactions: ["Interactions", "Engagement"],
+  reports: ["Customer reports", "Insights"],
+  plans: ["Account plans", "Engagement"],
 };
-
-function on(id, eventName, handler) {
-  document.getElementById(id)?.addEventListener(eventName, handler);
-}
 
 function localDate(date = new Date()) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
-
-function loadStudents() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) {
-    const previousData = localStorage.getItem("campusly-students-v1");
-    if (previousData) {
-      try {
-        const previousRecords = JSON.parse(previousData);
-        if (!Array.isArray(previousRecords)) throw new Error("Previous student data must be a list.");
-        const migrated = previousRecords.map((student) => ({
-          ...student,
-          guardian: student.guardian || "",
-          dob: student.dob || "",
-          attendance: student.attendance && typeof student.attendance === "object" ? student.attendance : {},
-          marks: Array.isArray(student.marks) ? student.marks : [],
-        }));
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
-        return migrated;
-      } catch (error) {
-        console.error("Unable to migrate earlier student records.", error);
-      }
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(demoStudents));
-    return demoStudents.map((student) => ({ ...student, attendance: {}, marks: [] }));
-  }
-  try {
-    const records = JSON.parse(saved);
-    if (!Array.isArray(records)) throw new Error("Saved student data must be a list.");
-    return records.map((student) => ({
-      ...student,
-      attendance: student.attendance && typeof student.attendance === "object" ? student.attendance : {},
-      marks: Array.isArray(student.marks) ? student.marks : [],
-    }));
-  } catch (error) {
-    console.error("Unable to read saved student records.", error);
-    return demoStudents.map((student) => ({ ...student, attendance: {}, marks: [] }));
-  }
-}
-
-function loadGoalplans() {
-  const saved = localStorage.getItem(GOALPLAN_STORAGE_KEY);
-  if (!saved) return [];
-  try {
-    const records = JSON.parse(saved);
-    if (!Array.isArray(records)) throw new Error("Saved goalplans must be a list.");
-    return records;
-  } catch (error) {
-    console.error("Unable to read saved goalplans.", error);
-    return [];
-  }
-}
-
-const goalplans = loadGoalplans();
-
-function saveStudents() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
 }
 
 function escapeHtml(value) {
@@ -101,11 +37,93 @@ function escapeHtml(value) {
 }
 
 function initials(name) {
-  return name.trim().split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase();
+  return String(name || "?").trim().split(/\s+/).slice(0, 2).map((part) => part[0] || "").join("").toUpperCase();
 }
 
-function classLabel(student) {
-  return student.className ? `${student.className} · Section ${student.section || "—"}` : "Ungrouped";
+function migrateCustomer(record, index) {
+  return {
+    id: String(record.id || `CUS-${1024 - index}`).replace(/^STU-/i, "CUS-"),
+    name: String(record.name || ""),
+    company: String(record.company || ""),
+    email: String(record.email || ""),
+    phone: String(record.phone || ""),
+    segment: String(record.segment || ""),
+    status: ["Prospective", "Active", "At risk", "Inactive"].includes(record.status) ? record.status : "Active",
+    notes: String(record.notes || ""),
+    added: String(record.added || localDate()),
+    nextFollowUp: String(record.nextFollowUp || ""),
+  };
+}
+
+function readList(key) {
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  const value = JSON.parse(raw);
+  if (!Array.isArray(value)) throw new Error(`Saved data in ${key} must be a list.`);
+  return value;
+}
+
+function loadCustomers() {
+  try {
+    const current = readList(CUSTOMER_STORAGE_KEY);
+    if (current) return current.map(migrateCustomer);
+    for (const key of OLD_CUSTOMER_KEYS) {
+      const previous = readList(key);
+      if (previous) {
+        const migrated = previous.map(migrateCustomer);
+        localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+    }
+    localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(demoCustomers));
+    return demoCustomers.map((customer) => ({ ...customer }));
+  } catch (error) {
+    console.error("Unable to load or migrate customer records.", error);
+    window.alert("Customer records could not be loaded. Existing data was not changed.");
+    return [];
+  }
+}
+
+function loadList(key, label) {
+  try {
+    return readList(key) || [];
+  } catch (error) {
+    console.error(`Unable to load ${label}.`, error);
+    window.alert(`${label} could not be loaded. Existing data was not changed.`);
+    return [];
+  }
+}
+
+const customers = loadCustomers();
+const interactions = loadList(INTERACTION_STORAGE_KEY, "customer interactions");
+const plans = loadList(PLAN_STORAGE_KEY, "customer account plans");
+const today = localDate();
+
+function saveList(key, value, label) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.error(`Unable to save ${label}.`, error);
+    window.alert(`Unable to save ${label}. Check that browser storage is available.`);
+    return false;
+  }
+}
+
+function saveCustomers() {
+  return saveList(CUSTOMER_STORAGE_KEY, customers, "customer records");
+}
+
+function customerById(id) {
+  return customers.find((customer) => customer.id === id);
+}
+
+function avatar(customer, index = 0) {
+  return `<span class="student-avatar color-${index % 4}">${escapeHtml(initials(customer.name))}</span>`;
+}
+
+function customerName(customer, index = 0) {
+  return `<span class="table-student">${avatar(customer, index)}<b>${escapeHtml(customer.name)}</b></span>`;
 }
 
 function displayDate(date) {
@@ -113,720 +131,317 @@ function displayDate(date) {
   return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(`${date}T12:00:00`));
 }
 
-function renderGoalplans() {
-  const list = document.getElementById("goalplan-list");
-  if (!list) return;
-  list.innerHTML = goalplans.length ? goalplans.map((goalplan) => `
-    <article class="goalplan-item">
-      <div class="goalplan-item-icon" aria-hidden="true">◎</div>
-      <div class="goalplan-item-copy">
-        <div class="goalplan-item-heading"><div><h3>${escapeHtml(goalplan.goalTitle || goalplan.name || "Untitled goalplan")}</h3><p>${escapeHtml(goalplan.studentName || "Student name not provided")} · ${escapeHtml(goalplan.rollNumber || "No roll number")}</p></div><span class="goalplan-payment-badge">${escapeHtml(goalplan.paymentType || "Payment type not set")}</span></div>
-        ${goalplan.goalCategory ? `<p class="goalplan-category">${escapeHtml(goalplan.goalCategory)}</p>` : ""}
-        ${goalplan.financialGoal ? `<p class="goalplan-category">Planning goal · ${escapeHtml(goalplan.financialGoal)}</p>` : ""}
-        <div class="goalplan-item-meta">
-          ${goalplan.joinDate || goalplan.targetDate ? `<span>Join date · ${escapeHtml(displayDate(goalplan.joinDate || goalplan.targetDate))}</span>` : ""}
-          ${goalplan.courseDuration ? `<span>${escapeHtml(goalplan.courseDuration)} ${escapeHtml(goalplan.durationUnit || "months")}</span>` : ""}
-          ${Number.isFinite(Number(goalplan.totalFees)) ? `<span>${escapeHtml(new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(goalplan.totalFees)))}</span>` : ""}
-          ${goalplan.goalHorizon ? `<span>Goal · ${escapeHtml(goalplan.goalHorizon)} years</span>` : ""}
-          ${Number.isFinite(Number(goalplan.futureValue)) ? `<span>Future value · ${escapeHtml(moneyText(Number(goalplan.futureValue)))}</span>` : ""}
-          ${goalplan.protectGoal !== undefined ? `<span>Protection · ${goalplan.protectGoal ? "Yes" : "No"}</span>` : ""}
-          ${goalplan.riskProfile ? `<span>${escapeHtml(goalplan.riskProfile)} · ${escapeHtml(goalplan.equityAllocation)}% equity / ${escapeHtml(goalplan.debtAllocation)}% debt</span>` : ""}
-          ${goalplan.investmentPreference ? `<span>${escapeHtml(goalplan.investmentPreference)}</span>` : ""}
+function customerSelect(id, selected = "") {
+  return `<select id="${id}" required><option value="">Choose a customer</option>${customers.map((customer) =>
+    `<option value="${escapeHtml(customer.id)}" ${customer.id === selected ? "selected" : ""}>${escapeHtml(customer.name)}${customer.company ? ` · ${escapeHtml(customer.company)}` : ""}</option>`).join("")}</select>`;
+}
+
+const navLinks = [
+  ["overview", "overview.html", "Overview"],
+  ["directory", "all-customers.html", "All customers"],
+  ["add", "add-customer.html", "Add customer"],
+  ["segments", "customer-segments.html", "Customer segments"],
+  ["unassigned", "unassigned-customers.html", "Unassigned customers"],
+  ["followups", "follow-ups.html", "Follow-ups"],
+  ["interactions", "interactions.html", "Interactions"],
+  ["reports", "reports.html", "Customer reports"],
+  ["plans", "account-plans.html", "Account plans"],
+];
+
+function renderShell(page, content) {
+  const [title, section] = pageInfo[page];
+  document.title = `Cliently — ${title}`;
+  const nav = navLinks.map(([key, href, label]) =>
+    `<a class="nav-item ${key === page ? "is-active" : ""}" href="${href}" ${key === page ? 'aria-current="page"' : ""}><span class="nav-icon">${key === "overview" ? "⌂" : key === "add" ? "＋" : key === "reports" ? "▤" : key === "followups" ? "✓" : "☷"}</span>${label}${key === "unassigned" ? `<span class="nav-count">${customers.filter((customer) => !customer.segment).length}</span>` : ""}</a>`).join("");
+  document.getElementById("app").innerHTML = `
+    <input class="state-control" type="checkbox" id="mobile-nav-toggle" />
+    <main class="portal">
+      <aside class="sidebar">
+        <a class="brand brand-light sidebar-brand" href="overview.html" aria-label="Cliently dashboard"><span class="brand-mark">C</span><span>cliently</span></a>
+        <div class="school-switcher"><span class="school-avatar">B</span><span class="school-label"><b>Brightside Business</b><small>Business workspace</small></span></div>
+        <div class="nav-label">WORKSPACE</div>
+        <nav class="main-nav" aria-label="Main navigation">
+          <div class="nav-section-title">CUSTOMERS</div>${nav}
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="help-card"><span class="help-icon">?</span><b>Need a hand?</b><small>We’re here to help</small><a href="mailto:support@cliently.example">Contact support <span>↗</span></a></div>
+          <a class="profile-button" href="index.html"><span class="profile-avatar">B</span><span><b>Business Admin</b><small>Administrator · Sign out</small></span><span class="profile-more">↗</span></a>
         </div>
-        ${Array.isArray(goalplan.investmentTypes) && goalplan.investmentTypes.length ? `<p class="goalplan-category">Investment areas · ${escapeHtml(goalplan.investmentTypes.join(", "))}</p>` : ""}
+      </aside>
+      <label class="sidebar-scrim" for="mobile-nav-toggle" aria-label="Close navigation"></label>
+      <section class="portal-main">
+        <header class="topbar"><label class="mobile-menu" for="mobile-nav-toggle" aria-label="Open navigation">☰</label><div class="breadcrumbs"><a href="overview.html">Workspace</a><span class="crumb-divider">/</span><b>${escapeHtml(section)}</b><span class="crumb-divider">/</span><b>${escapeHtml(title)}</b></div>
+          <div class="topbar-right"><span class="today-label">${new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date())}</span><span class="topbar-avatar">B</span></div>
+        </header>
+        <div class="page-content"><section class="view-section">${content}</section></div>
+      </section>
+    </main>`;
+}
+
+function pageHeading(eyebrow, heading, intro, action = "") {
+  return `<div class="page-heading heading-with-action"><div><div class="eyebrow">${escapeHtml(eyebrow)}</div><h1>${escapeHtml(heading)}</h1><p>${escapeHtml(intro)}</p></div>${action}</div>`;
+}
+
+function renderOverview() {
+  const active = customers.filter((customer) => customer.status === "Active").length;
+  const due = customers.filter((customer) => customer.nextFollowUp && customer.nextFollowUp <= today).length;
+  const prospects = customers.filter((customer) => customer.status === "Prospective").length;
+  const recent = [...customers].sort((a, b) => b.added.localeCompare(a.added)).slice(0, 5);
+  renderShell("overview", `
+    ${pageHeading("BUSINESS OVERVIEW", "Welcome to your workspace", "A clear view of your customers and the relationships you’re building.", '<a class="primary-button" href="add-customer.html">＋ Add customer</a>')}
+    <div class="stats-grid">
+      <article class="stat-card"><div class="stat-top"><span>Total customers</span><span class="stat-icon students-icon">♧</span></div><div class="stat-number">${customers.length}</div><div class="stat-foot"><span>All customer records</span></div></article>
+      <article class="stat-card"><div class="stat-top"><span>Active customers</span><span class="stat-icon groups-icon">✓</span></div><div class="stat-number">${active}</div><div class="stat-foot"><span>Currently doing business</span></div></article>
+      <article class="stat-card"><div class="stat-top"><span>Follow-ups due</span><span class="stat-icon reports-icon">↗</span></div><div class="stat-number">${due}</div><div class="stat-foot"><a class="inline-link" href="follow-ups.html">Review follow-ups ↗</a></div></article>
+      <article class="stat-card"><div class="stat-top"><span>Prospective</span><span class="stat-icon reports-icon">◎</span></div><div class="stat-number">${prospects}</div><div class="stat-foot"><span>Potential new customers</span></div></article>
+    </div>
+    <article class="content-card recent-card"><div class="card-heading"><div><h2>Recently added customers</h2><p>Your latest customer records</p></div><a class="inline-link" href="all-customers.html">View all →</a></div>
+      <div class="recent-list">${recent.length ? recent.map((customer, index) => `<div class="recent-row">${avatar(customer, index)}<span class="recent-student-name"><b>${escapeHtml(customer.name)}</b><small>${escapeHtml(customer.company || customer.id)} · ${escapeHtml(customer.segment || "Unassigned")}</small></span><span class="status-tag">${escapeHtml(customer.status)}</span></div>`).join("") : '<div class="empty-state">No customers yet. Add a customer to get started.</div>'}</div>
+    </article>
+    <div class="welcome-banner"><div><span class="banner-label">CUSTOMER RELATIONSHIPS, AT A GLANCE</span><h2>Build stronger customer relationships.</h2><p>Keep contact details, follow-ups, and account activity organized in one place.</p><a class="banner-button" href="reports.html">Explore customer reports <span>→</span></a></div></div>`);
+}
+
+function renderAddCustomer() {
+  renderShell("add", `
+    ${pageHeading("CUSTOMER DETAILS", "Add a customer", "Create a customer record for your business directory.")}
+    <div class="form-layout"><form class="content-card student-form" id="customer-form">
+      <div class="form-section-heading"><span class="form-step">01</span><div><h2>Customer information</h2><p>Enter the customer's business and contact details.</p></div></div>
+      <div class="form-grid">
+        <div class="form-field"><label for="customer-name">Contact name <span>*</span></label><input id="customer-name" name="name" placeholder="e.g. Alex Morgan" required /></div>
+        <div class="form-field"><label for="customer-company">Company / organization</label><input id="customer-company" name="company" placeholder="e.g. Acme Solutions" /></div>
+        <div class="form-field"><label for="customer-email">Business email</label><input id="customer-email" name="email" type="email" placeholder="alex@company.com" /></div>
+        <div class="form-field"><label for="customer-phone">Phone number</label><input id="customer-phone" name="phone" type="tel" placeholder="+1 555 0100" /></div>
+        <div class="form-field"><label for="customer-segment">Customer segment</label><input id="customer-segment" name="segment" placeholder="e.g. Retail, Technology" /></div>
+        <div class="form-field"><label for="customer-status">Relationship status</label><select id="customer-status" name="status"><option>Prospective</option><option>Active</option><option>At risk</option><option>Inactive</option></select></div>
+        <div class="form-field form-field-wide"><label for="customer-notes">Notes</label><textarea id="customer-notes" name="notes" rows="4" placeholder="Important details about this customer"></textarea></div>
       </div>
-    </article>`).join("") : '<div class="empty-state goalplan-empty-state"><span class="goalplan-empty-icon" aria-hidden="true">◎</span><b>No goalplans yet</b><p>Create your first goalplan to start tracking a school goal.</p></div>';
-}
-
-function setGoalplanStep(step) {
-  const form = document.getElementById("goalplan-form");
-  if (!form || step < 1 || step > 3) return;
-  form.dataset.currentStep = String(step);
-  form.querySelectorAll("[data-goalplan-step-panel]").forEach((panel) => {
-    panel.hidden = panel.dataset.goalplanStepPanel !== String(step);
-  });
-  form.querySelectorAll("[data-goalplan-step-button]").forEach((button) => {
-    const buttonStep = Number(button.dataset.goalplanStepButton);
-    button.classList.toggle("is-active", buttonStep === step);
-    button.classList.toggle("is-complete", buttonStep < step);
-    if (buttonStep === step) button.setAttribute("aria-current", "step");
-    else button.removeAttribute("aria-current");
-    button.disabled = buttonStep > step;
-  });
-  if (step === 3) renderGoalplanSummary();
-}
-
-function moneyText(amount) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-function updateGoalplanFutureValue() {
-  const presentValue = Number(document.getElementById("goalplan-present-value")?.value);
-  const inflationRate = Number(document.getElementById("goalplan-inflation")?.value);
-  const horizon = Number(document.getElementById("goalplan-horizon")?.value);
-  const futureValue = document.getElementById("goalplan-future-value");
-  if (!futureValue) return;
-  futureValue.value = Number.isFinite(presentValue) && presentValue > 0
-    ? moneyText(presentValue * ((1 + inflationRate / 100) ** horizon))
-    : "";
-}
-
-function updateGoalplanHorizon() {
-  const horizon = document.getElementById("goalplan-horizon");
-  const output = document.getElementById("goalplan-horizon-value");
-  if (!horizon || !output) return;
-  const years = Number(horizon.value);
-  output.value = `${years} ${years === 1 ? "year" : "years"}`;
-  output.textContent = output.value;
-  updateGoalplanFutureValue();
-}
-
-function updateGoalplanAllocation() {
-  const equity = document.getElementById("goalplan-equity");
-  const equityValue = document.getElementById("goalplan-equity-value");
-  const debtValue = document.getElementById("goalplan-debt-value");
-  const total = document.getElementById("goalplan-allocation-total");
-  if (!equity || !equityValue || !debtValue || !total) return;
-  const equityAllocation = Number(equity.value);
-  equityValue.value = String(equityAllocation);
-  equityValue.textContent = String(equityAllocation);
-  debtValue.value = String(100 - equityAllocation);
-  debtValue.textContent = String(100 - equityAllocation);
-  equity.style.setProperty("--equity-share", `${equityAllocation}%`);
-  total.textContent = "100% allocated";
-  analyzeGoalplanRisk();
-}
-
-function analyzeGoalplanRisk() {
-  const equity = Number(document.getElementById("goalplan-equity").value);
-  const debt = 100 - equity;
-  const equityGrowth = Number(document.getElementById("goalplan-equity-growth").value);
-  const debtGrowth = Number(document.getElementById("goalplan-debt-growth").value);
-  const message = document.getElementById("goalplan-risk-description");
-  const equityGrowthField = document.getElementById("goalplan-equity-growth");
-  const debtGrowthField = document.getElementById("goalplan-debt-growth");
-  const meter = document.querySelector(".goalplan-risk-meter-track");
-  if (![equity, debt, equityGrowth, debtGrowth].every(Number.isFinite)
-    || !equityGrowthField.checkValidity() || !debtGrowthField.checkValidity()) {
-    document.getElementById("goalplan-risk-label").textContent = "Check growth rates";
-    meter.setAttribute("aria-valuenow", "0");
-    meter.setAttribute("aria-valuetext", "Growth assumptions are invalid");
-    document.getElementById("goalplan-risk-needle").style.left = "0%";
-    message.textContent = "Enter growth assumptions from 0% to 30%.";
-    return false;
-  }
-  const weightedGrowth = ((equity * equityGrowth) + (debt * debtGrowth)) / 100;
-  const profile = weightedGrowth < 8 ? "Conservative" : weightedGrowth < 12 ? "Balanced" : "Growth-focused";
-  document.getElementById("goalplan-risk-label").textContent = profile;
-  meter.setAttribute("aria-valuenow", weightedGrowth.toFixed(1));
-  meter.setAttribute("aria-valuetext", `${profile}: ${weightedGrowth.toFixed(1)}% estimated weighted growth`);
-  document.getElementById("goalplan-risk-needle").style.left = `${Math.min(100, (weightedGrowth / 30) * 100)}%`;
-  message.textContent = `Illustrative weighted growth assumption: ${weightedGrowth.toFixed(1)}%.`;
-  return true;
-}
-
-function validateGoalplanStep(step) {
-  const panel = document.querySelector(`[data-goalplan-step-panel="${step}"]`);
-  if (!panel) return false;
-  const invalid = [...panel.querySelectorAll("input, select")].find((field) => !field.checkValidity());
-  if (invalid) {
-    invalid.reportValidity();
-    invalid.focus();
-    return false;
-  }
-  if (step === 2 && !analyzeGoalplanRisk()) return false;
-  return true;
-}
-
-function renderGoalplanSummary() {
-  const summary = document.getElementById("goalplan-summary");
-  if (!summary) return;
-  const value = (id) => document.getElementById(id).value.trim();
-  const paymentType = document.getElementById("goalplan-payment-type").value;
-  const durationUnit = document.getElementById("goalplan-duration-unit").value;
-  const totalFees = Number(document.getElementById("goalplan-total-fees").value);
-  const goalCategory = document.querySelector('input[name="goalCategory"]:checked')?.value || "No focus selected";
-  const financialGoal = document.querySelector('input[name="financialGoal"]:checked')?.value || "No goal selected";
-  const presentValue = Number(value("goalplan-present-value"));
-  const horizon = Number(value("goalplan-horizon"));
-  const inflationRate = Number(value("goalplan-inflation"));
-  const equity = Number(value("goalplan-equity"));
-  const debt = 100 - equity;
-  const equityGrowth = Number(value("goalplan-equity-growth"));
-  const debtGrowth = Number(value("goalplan-debt-growth"));
-  const riskIsValid = analyzeGoalplanRisk();
-  const futureValue = presentValue * ((1 + inflationRate / 100) ** horizon);
-  const weightedGrowth = ((equity * equityGrowth) + (debt * debtGrowth)) / 100;
-  const riskProfile = riskIsValid
-    ? weightedGrowth < 8 ? "Conservative" : weightedGrowth < 12 ? "Balanced" : "Growth-focused"
-    : "Check growth rates";
-  const investments = [...document.querySelectorAll('input[name="investmentTypes"]:checked')].map((input) => input.value);
-  const fields = [
-    ["Student", value("goalplan-student-name")],
-    ["Roll number", value("goalplan-roll-number")],
-    ["Join date", displayDate(value("goalplan-join-date"))],
-    ["Goal title", value("goalplan-title")],
-    ["Goal focus", goalCategory],
-    ["Planning goal", financialGoal],
-    ["Payment type", paymentType],
-    ["Course duration", `${value("goalplan-duration")} ${durationUnit}`],
-    ["Course total fees", moneyText(totalFees)],
-    ["Goal horizon", `${horizon} ${horizon === 1 ? "year" : "years"}`],
-    ["Present goal value", moneyText(presentValue)],
-    ["Inflation assumption", `${inflationRate}%`],
-    ["Estimated future goal value", moneyText(futureValue)],
-    ["Goal protection", document.getElementById("goalplan-protect").checked ? "Yes" : "No"],
-    ["Risk profile", `${riskProfile} · ${weightedGrowth.toFixed(1)}% illustrative growth`],
-    ["Asset allocation", `Equity ${equity}% · Debt ${debt}%`],
-    ["Estimated equity growth", `${equityGrowth}%`],
-    ["Estimated debt growth", `${debtGrowth}%`],
-    ["Investment areas", investments.length ? investments.join(", ") : "None selected"],
-    ["Investment preference", document.querySelector('input[name="investmentPreference"]:checked')?.value || "—"],
-  ];
-  summary.innerHTML = fields.map(([label, fieldValue]) => `
-    <div class="goalplan-summary-item"><span>${escapeHtml(label)}</span><b>${escapeHtml(fieldValue || "—")}</b></div>`).join("");
-}
-
-function currentReportClass() {
-  return document.querySelector('input[name="report-class"]:checked')?.value || "10th";
-}
-
-function filteredStudents(className = "", section = "") {
-  return students.filter((student) => (!className || student.className === className)
-    && (!section || student.section === section));
-}
-
-function attendanceStats(student) {
-  const marks = Object.values(student.attendance || {});
-  const attended = marks.filter((status) => status === "Present" || status === "Late").length;
-  return { attended, recorded: marks.length, percent: marks.length ? Math.round((attended / marks.length) * 100) : null };
-}
-
-function averageMark(student) {
-  const marks = student.marks || [];
-  if (!marks.length) return null;
-  return marks.reduce((sum, mark) => sum + (Number(mark.score) / Number(mark.max)) * 100, 0) / marks.length;
-}
-
-function percentText(value) {
-  return value === null || !Number.isFinite(value) ? "—" : `${Math.round(value)}%`;
-}
-
-function avatar(student, index = 0) {
-  return `<span class="student-avatar color-${index % 4}">${escapeHtml(initials(student.name))}</span>`;
-}
-
-function tableStudent(student, index = 0) {
-  return `<span class="table-student">${avatar(student, index)}<b>${escapeHtml(student.name)}</b></span>`;
-}
-
-function attendanceOptions(student, date) {
-  const current = student.attendance[date] || "";
-  return `<select class="mark-status-select" data-attendance-id="${escapeHtml(student.id)}" aria-label="Attendance status for ${escapeHtml(student.name)}">
-    <option value="" ${current === "" ? "selected" : ""}>Not marked</option>
-    <option ${current === "Present" ? "selected" : ""}>Present</option>
-    <option ${current === "Absent" ? "selected" : ""}>Absent</option>
-    <option ${current === "Late" ? "selected" : ""}>Late</option>
-  </select>`;
-}
-
-function renderDashboard() {
-  const grouped = students.filter((student) => student.className);
-  document.getElementById("dashboard-total").textContent = students.length;
-  document.getElementById("dashboard-grouped").textContent = grouped.length;
-  const todayRecords = students.filter((student) => student.attendance[today]);
-  const present = todayRecords.filter((student) => ["Present", "Late"].includes(student.attendance[today])).length;
-  document.getElementById("dashboard-attendance").textContent = todayRecords.length ? `${Math.round((present / todayRecords.length) * 100)}%` : "—";
-  const allMarks = students.flatMap((student) => student.marks || []);
-  const mean = allMarks.length ? allMarks.reduce((sum, mark) => sum + (mark.score / mark.max) * 100, 0) / allMarks.length : null;
-  document.getElementById("dashboard-average").textContent = percentText(mean);
-  const recent = [...students].sort((a, b) => b.added.localeCompare(a.added)).slice(0, 4);
-  document.getElementById("recent-students").innerHTML = recent.length ? recent.map((student, index) => `
-    <div class="recent-row">${avatar(student, index)}
-      <span class="recent-student-name"><b>${escapeHtml(student.name)}</b><small>${escapeHtml(student.id)} · ${escapeHtml(classLabel(student))}</small></span>
-      <span class="status-tag ${student.className ? "grouped" : ""}">${student.className ? "Enrolled" : "Ungrouped"}</span>
-    </div>`).join("") : '<div class="empty-state">No students yet. Add a student to get started.</div>';
+      <div class="demo-note">Customer records are saved in this browser on this device. Export a backup from the directory.</div>
+      <div class="form-actions"><button type="reset" class="secondary-button">Clear form</button><button type="submit" class="primary-button">Save customer <span>→</span></button></div>
+    </form></div>`);
 }
 
 function renderDirectory() {
-  const query = document.getElementById("directory-search").value.trim().toLowerCase();
-  const className = document.getElementById("directory-class").value;
-  const section = document.getElementById("directory-section").value;
-  const records = filteredStudents(className, section).filter((student) =>
-    `${student.name} ${student.id} ${student.email} ${student.guardian}`.toLowerCase().includes(query));
-  document.getElementById("directory-total").textContent = records.length;
-  document.getElementById("ungrouped-nav-count").textContent = students.filter((student) => !student.className).length;
-  document.getElementById("directory-table-body").innerHTML = records.length ? records.map((student, index) => `
-    <tr><td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
-    <td>${escapeHtml(student.className || "—")}</td><td>${escapeHtml(student.section || "—")}</td>
-    <td>${escapeHtml(student.guardian || "—")}</td><td>${escapeHtml(student.email || "—")}</td>
-    <td>${percentText(attendanceStats(student).percent)}</td><td>${percentText(averageMark(student))}</td>
-    <td>${student.className ? `<button type="button" class="row-action unassign-student" data-student-id="${escapeHtml(student.id)}">Ungroup</button>` : ""}
-    <button type="button" class="record-action delete-student" data-student-id="${escapeHtml(student.id)}">Remove</button></td></tr>`).join("")
-    : '<tr><td class="empty-state-cell" colspan="9">No students match these filters.</td></tr>';
-  document.getElementById("directory-footer").textContent = `Showing ${records.length} of ${students.length} enrolled student records`;
-}
-
-function renderGroupedAndUngrouped() {
-  const ungrouped = students.filter((student) => !student.className);
-  const groupBody = document.getElementById("group-table-body");
-  if (groupBody) {
-    document.getElementById("group-count").textContent = `${ungrouped.length} ungrouped`;
-    groupBody.innerHTML = ungrouped.length ? ungrouped.map((student, index) => `
-      <tr><td><input class="group-student-check" type="checkbox" value="${escapeHtml(student.id)}" aria-label="Select ${escapeHtml(student.name)}" /></td>
-      <td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
-      <td>${escapeHtml(student.email || "—")}</td><td>${escapeHtml(displayDate(student.added))}</td></tr>`).join("")
-      : '<tr><td class="empty-state-cell" colspan="5">All students are assigned to a class.</td></tr>';
-  }
-  const ungroupedBody = document.getElementById("ungrouped-table-body");
-  if (ungroupedBody) {
-    const query = document.getElementById("ungrouped-search").value.trim().toLowerCase();
-    const filtered = ungrouped.filter((student) => `${student.name} ${student.id} ${student.email}`.toLowerCase().includes(query));
-    document.getElementById("ungrouped-total").textContent = ungrouped.length;
-    ungroupedBody.innerHTML = filtered.length ? filtered.map((student, index) => `
-      <tr><td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
-      <td>${escapeHtml(student.email || "—")}</td><td>${escapeHtml(displayDate(student.added))}</td>
-      <td><span class="status-tag">Ungrouped</span></td>
-      <td><button class="row-action go-group-student" type="button" data-student-id="${escapeHtml(student.id)}">Group</button></td></tr>`).join("")
-      : '<tr><td class="empty-state-cell" colspan="6">No ungrouped students found.</td></tr>';
-    document.getElementById("ungrouped-footer").textContent = `${filtered.length} students shown · ${ungrouped.length} need a class assignment`;
-  }
-}
-
-function renderAttendance() {
-  const date = document.getElementById("attendance-date").value || today;
-  const records = filteredStudents(document.getElementById("attendance-class").value, document.getElementById("attendance-section").value);
-  const saved = records.filter((student) => student.attendance[date]).length;
-  document.getElementById("attendance-summary").textContent = `${records.length} student${records.length === 1 ? "" : "s"} in this register`;
-  document.getElementById("attendance-completion").textContent = records.length && saved === records.length ? "All attendance saved" : `${saved} of ${records.length} marked`;
-  document.getElementById("attendance-table-body").innerHTML = records.length ? records.map((student, index) => `
-    <tr><td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
-    <td>${escapeHtml(student.className || "—")}</td><td>${escapeHtml(student.section || "—")}</td><td>${attendanceOptions(student, date)}</td></tr>`).join("")
-    : '<tr><td class="empty-state-cell" colspan="5">No students match this class and section.</td></tr>';
-}
-
-function renderMarksEntry() {
-  const className = document.getElementById("exam-class").value;
-  const section = document.getElementById("exam-section").value;
-  const records = className ? filteredStudents(className, section) : [];
-  const max = Number(document.getElementById("exam-max").value) || 100;
-  document.getElementById("marks-entry-body").innerHTML = records.length ? records.map((student, index) => `
-    <tr><td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td>
-    <td>${escapeHtml(student.section || "—")}</td><td><input type="number" min="0" max="${escapeHtml(max)}" step="0.5" data-mark-student="${escapeHtml(student.id)}" aria-label="Score for ${escapeHtml(student.name)}" placeholder="0–${escapeHtml(max)}" /></td></tr>`).join("")
-    : '<tr><td colspan="4" class="empty-state-cell">Choose a class with enrolled students to enter marks.</td></tr>';
-}
-
-function renderMarksHistory() {
-  const exams = new Map();
-  students.forEach((student) => (student.marks || []).forEach((mark) => {
-    const key = [mark.exam, mark.subject, student.className, mark.date].join("|");
-    if (!exams.has(key)) exams.set(key, { ...mark, className: student.className, scores: [] });
-    exams.get(key).scores.push((mark.score / mark.max) * 100);
-  }));
-  const rows = [...exams.values()].sort((a, b) => b.date.localeCompare(a.date));
-  document.getElementById("marks-history-body").innerHTML = rows.length ? rows.map((exam) => {
-    const mean = exam.scores.reduce((sum, score) => sum + score, 0) / exam.scores.length;
-    return `<tr><td>${escapeHtml(exam.exam)}</td><td>${escapeHtml(exam.subject)}</td><td>${escapeHtml(exam.className)}</td><td>${exam.scores.length}</td><td>${percentText(mean)}</td></tr>`;
-  }).join("") : '<tr><td colspan="5" class="empty-state-cell">No assessments recorded yet.</td></tr>';
-}
-
-function renderReport() {
-  const className = currentReportClass();
-  const section = document.getElementById("report-section").value;
-  const records = filteredStudents(className, section);
-  const attendanceValues = records.map((student) => attendanceStats(student).percent).filter((value) => value !== null);
-  const markValues = records.map(averageMark).filter((value) => value !== null);
-  const average = (values) => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
-  document.getElementById("report-student-count").textContent = records.length;
-  document.getElementById("report-attendance-average").textContent = percentText(average(attendanceValues));
-  document.getElementById("report-marks-average").textContent = percentText(average(markValues));
-  document.getElementById("report-table-title").textContent = `${className} class${section ? ` · Section ${section}` : ""} report`;
-  document.getElementById("report-footer").textContent = `${records.length} students · ${attendanceValues.length} with attendance records · ${markValues.length} with exam marks`;
-  document.getElementById("report-table-body").innerHTML = records.length ? records.map((student, index) => `
-    <tr><td>${tableStudent(student, index)}</td><td class="id-cell">${escapeHtml(student.id)}</td><td>${escapeHtml(student.section || "—")}</td>
-    <td>${percentText(attendanceStats(student).percent)}</td><td>${percentText(averageMark(student))}</td><td>${(student.marks || []).length}</td></tr>`).join("")
-    : '<tr><td colspan="6" class="empty-state-cell">No students are enrolled in this class and section yet.</td></tr>';
-}
-
-function renderCurrentPage() {
-  const page = document.body.dataset.page;
-  if (page === "overview") renderDashboard();
-  if (page === "goalplan") renderGoalplans();
-  if (page === "directory") renderDirectory();
-  if (page === "groups" || page === "ungrouped") renderGroupedAndUngrouped();
-  if (page === "attendance") renderAttendance();
-  if (page === "marks") {
-    renderMarksEntry();
-    renderMarksHistory();
-  }
-  if (page === "reports") renderReport();
-}
-
-function setPage(page) {
-  const href = pageFiles[page];
-  if (href) window.location.assign(href);
-}
-
-loginForm?.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const email = document.getElementById("login-email").value.trim();
-  const emailName = email.split("@")[0].split("+")[0].replace(/[._-]+/g, " ").trim();
-  const displayName = emailName.split(/\s+/).filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ") || "Student";
-  localStorage.setItem("campusly-profile-name", displayName);
-  window.location.assign(pageFiles.overview);
-});
-
-document.querySelectorAll('input[name="report-class"]').forEach((input) => input.addEventListener("change", renderReport));
-document.querySelectorAll("[data-report-class]").forEach((shortcut) => shortcut.addEventListener("click", (event) => {
-  const classInput = document.querySelector(`input[name="report-class"][value="${shortcut.dataset.reportClass}"]`);
-  if (classInput) {
-    classInput.checked = true;
-    renderReport();
-  } else {
-    event.preventDefault();
-    window.location.assign(`reports.html?class=${encodeURIComponent(shortcut.dataset.reportClass)}`);
-  }
-}));
-
-document.querySelectorAll(".profile-button").forEach((button) => button.addEventListener("click", () => {
-  localStorage.removeItem("campusly-profile-name");
-}));
-
-on("student-form", "submit", (event) => {
-  event.preventDefault();
-  const id = document.getElementById("student-id").value.trim();
-  if (students.some((student) => student.id.toLowerCase() === id.toLowerCase())) {
-    window.alert("That student ID is already in use. Please enter a unique ID.");
-    document.getElementById("student-id").focus();
-    return;
-  }
-  const student = {
-    id,
-    name: document.getElementById("student-name").value.trim(),
-    email: document.getElementById("student-email").value.trim(),
-    phone: document.getElementById("student-phone").value.trim(),
-    dob: document.getElementById("student-dob").value,
-    guardian: document.getElementById("student-guardian").value.trim(),
-    className: document.getElementById("student-class").value,
-    section: document.getElementById("student-section").value,
-    added: today,
-    attendance: {},
-    marks: [],
+  const records = [...customers].sort((a, b) => a.name.localeCompare(b.name));
+  renderShell("directory", `
+    ${pageHeading("CUSTOMER DETAILS", "All customers", "Search, review, and manage your customer directory.", '<button class="primary-button" id="export-customers" type="button">Export CSV</button>')}
+    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Customer directory <span class="count-pill">${records.length}</span></h2><p>Search or filter customer records.</p></div><div class="table-controls"><label class="search-box"><span>⌕</span><input id="customer-search" placeholder="Search customers..." aria-label="Search customers" /></label><select id="customer-status-filter" aria-label="Filter by relationship status"><option value="">All statuses</option><option>Prospective</option><option>Active</option><option>At risk</option><option>Inactive</option></select></div></div>
+      <div class="table-scroll"><table><thead><tr><th>CUSTOMER</th><th>COMPANY</th><th>SEGMENT</th><th>EMAIL</th><th>PHONE</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody id="customer-table-body"></tbody></table></div><div class="table-footer" id="customer-directory-footer"></div>
+    </div>`);
+  const search = document.getElementById("customer-search");
+  const status = document.getElementById("customer-status-filter");
+  const draw = () => {
+    const query = search.value.trim().toLowerCase();
+    const matches = records.filter((customer) => (!status.value || customer.status === status.value)
+      && `${customer.name} ${customer.company} ${customer.email} ${customer.phone} ${customer.segment} ${customer.id}`.toLowerCase().includes(query));
+    document.getElementById("customer-table-body").innerHTML = matches.length ? matches.map((customer, index) => `<tr><td>${customerName(customer, index)}</td><td>${escapeHtml(customer.company || "—")}</td><td>${escapeHtml(customer.segment || "—")}</td><td>${escapeHtml(customer.email || "—")}</td><td>${escapeHtml(customer.phone || "—")}</td><td><span class="status-tag">${escapeHtml(customer.status)}</span></td><td><button class="record-action" type="button" data-delete-customer="${escapeHtml(customer.id)}">Remove</button></td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="7">No customers match these filters.</td></tr>';
+    document.getElementById("customer-directory-footer").textContent = `Showing ${matches.length} of ${customers.length} customer records`;
   };
-  students.unshift(student);
-  saveStudents();
-  event.currentTarget.reset();
-  renderCurrentPage();
-  setPage("directory");
-});
-
-on("create-goalplan-button", "click", () => {
-  const form = document.getElementById("goalplan-form");
-  form.reset();
-  const joinDate = document.getElementById("goalplan-join-date");
-  if (!joinDate.value) joinDate.value = today;
-  updateGoalplanHorizon();
-  updateGoalplanAllocation();
-  document.getElementById("goalplan-protect-label").textContent = "Yes";
-  setGoalplanStep(1);
-  form.hidden = false;
-  document.getElementById("goalplan-roll-number").focus();
-});
-
-on("cancel-goalplan", "click", () => {
-  const form = document.getElementById("goalplan-form");
-  form.reset();
-  const joinDate = document.getElementById("goalplan-join-date");
-  if (joinDate) joinDate.value = today;
-  updateGoalplanHorizon();
-  updateGoalplanAllocation();
-  document.getElementById("goalplan-protect-label").textContent = "Yes";
-  setGoalplanStep(1);
-  form.hidden = true;
-  document.getElementById("create-goalplan-button").focus();
-});
-
-["goalplan-present-value", "goalplan-inflation"].forEach((id) => {
-  on(id, "input", updateGoalplanFutureValue);
-  on(id, "change", updateGoalplanFutureValue);
-});
-on("goalplan-horizon", "input", updateGoalplanHorizon);
-
-document.querySelectorAll("[data-inflation-step]").forEach((button) => button.addEventListener("click", () => {
-  const input = document.getElementById("goalplan-inflation");
-  const nextRate = Number(input.value) + Number(button.dataset.inflationStep) * 0.5;
-  input.value = String(Math.min(20, Math.max(0, nextRate)));
-  updateGoalplanFutureValue();
-}));
-
-on("goalplan-protect", "change", (event) => {
-  document.getElementById("goalplan-protect-label").textContent = event.currentTarget.checked ? "Yes" : "No";
-});
-
-on("goalplan-equity", "input", (event) => {
-  updateGoalplanAllocation();
-});
-["goalplan-equity-growth", "goalplan-debt-growth"].forEach((id) => {
-  on(id, "input", analyzeGoalplanRisk);
-  on(id, "change", analyzeGoalplanRisk);
-});
-
-document.querySelectorAll("[data-goalplan-next]").forEach((button) => button.addEventListener("click", () => {
-  const currentStep = Number(document.getElementById("goalplan-form").dataset.currentStep || 1);
-  if (!validateGoalplanStep(currentStep)) return;
-  setGoalplanStep(Number(button.dataset.goalplanNext));
-}));
-
-document.querySelectorAll("[data-goalplan-back]").forEach((button) => button.addEventListener("click", () => {
-  setGoalplanStep(Number(button.dataset.goalplanBack));
-}));
-
-document.querySelectorAll("[data-goalplan-step-button]").forEach((button) => button.addEventListener("click", () => {
-  const currentStep = Number(document.getElementById("goalplan-form").dataset.currentStep || 1);
-  const targetStep = Number(button.dataset.goalplanStepButton);
-  if (targetStep < currentStep) setGoalplanStep(targetStep);
-}));
-
-on("goalplan-form", "submit", (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  if (Number(form.dataset.currentStep) !== 3) return;
-  const rollNumber = document.getElementById("goalplan-roll-number").value.trim();
-  const studentName = document.getElementById("goalplan-student-name").value.trim();
-  const goalTitle = document.getElementById("goalplan-title").value.trim();
-  const totalFees = Number(document.getElementById("goalplan-total-fees").value);
-  const presentValue = Number(document.getElementById("goalplan-present-value").value);
-  const inflationRate = Number(document.getElementById("goalplan-inflation").value);
-  const horizon = Number(document.getElementById("goalplan-horizon").value);
-  const equityAllocation = Number(document.getElementById("goalplan-equity").value);
-  const debtAllocation = 100 - equityAllocation;
-  const equityGrowth = Number(document.getElementById("goalplan-equity-growth").value);
-  const debtGrowth = Number(document.getElementById("goalplan-debt-growth").value);
-  if (!rollNumber || !studentName || !goalTitle || !Number.isFinite(totalFees) || totalFees < 0
-    || !Number.isFinite(presentValue) || presentValue <= 0
-    || !Number.isFinite(horizon) || horizon < 1 || horizon > 100
-    || equityAllocation < 0 || equityAllocation > 100
-    || !analyzeGoalplanRisk()) return;
-  const weightedGrowth = ((equityAllocation * equityGrowth) + (debtAllocation * debtGrowth)) / 100;
-  const financialGoal = document.querySelector('input[name="financialGoal"]:checked')?.value || "";
-  goalplans.unshift({
-    rollNumber,
-    joinDate: document.getElementById("goalplan-join-date").value,
-    studentName,
-    goalTitle,
-    goalCategory: document.querySelector('input[name="goalCategory"]:checked')?.value || "",
-    financialGoal,
-    paymentType: document.getElementById("goalplan-payment-type").value,
-    courseDuration: Number(document.getElementById("goalplan-duration").value),
-    durationUnit: document.getElementById("goalplan-duration-unit").value,
-    totalFees,
-    goalHorizon: horizon,
-    presentValue,
-    inflationRate,
-    futureValue: presentValue * ((1 + inflationRate / 100) ** horizon),
-    protectGoal: document.getElementById("goalplan-protect").checked,
-    equityAllocation,
-    debtAllocation,
-    equityGrowth,
-    debtGrowth,
-    riskProfile: weightedGrowth < 8 ? "Conservative" : weightedGrowth < 12 ? "Balanced" : "Growth-focused",
-    weightedGrowth,
-    investmentTypes: [...document.querySelectorAll('input[name="investmentTypes"]:checked')].map((input) => input.value),
-    investmentPreference: document.querySelector('input[name="investmentPreference"]:checked')?.value || "",
+  search.addEventListener("input", draw);
+  status.addEventListener("change", draw);
+  document.getElementById("customer-table-body").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-delete-customer]");
+    if (!button) return;
+    const customer = customerById(button.dataset.deleteCustomer);
+    if (!customer || !window.confirm(`Remove ${customer.name} from your customer directory?`)) return;
+    const index = customers.indexOf(customer);
+    customers.splice(index, 1);
+    if (saveCustomers()) renderDirectory();
+    else customers.splice(index, 0, customer);
   });
-  localStorage.setItem(GOALPLAN_STORAGE_KEY, JSON.stringify(goalplans));
-  form.reset();
-  const joinDate = document.getElementById("goalplan-join-date");
-  if (joinDate) joinDate.value = today;
-  setGoalplanStep(1);
-  form.hidden = true;
-  updateGoalplanHorizon();
-  updateGoalplanAllocation();
-  document.getElementById("goalplan-protect-label").textContent = "Yes";
-  renderGoalplans();
-  document.getElementById("create-goalplan-button").focus();
-});
+  document.getElementById("export-customers").addEventListener("click", exportCustomers);
+  draw();
+}
 
-on("group-select-all", "change", (event) => {
-  document.querySelectorAll(".group-student-check").forEach((checkbox) => { checkbox.checked = event.target.checked; });
-});
+function renderSegments(unassignedOnly = false) {
+  const page = unassignedOnly ? "unassigned" : "segments";
+  const listed = customers.filter((customer) => !unassignedOnly || !customer.segment);
+  renderShell(page, `
+    ${pageHeading(unassignedOnly ? "CUSTOMER SEGMENTS" : "CUSTOMER MANAGEMENT", unassignedOnly ? "Unassigned customers" : "Customer segments", unassignedOnly ? "Add these customers to a segment to organize your relationships." : "Organize customer accounts by industry, type, or any category that fits your business.")}
+    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>${unassignedOnly ? "Customers to assign" : "Manage customer segments"} <span class="count-pill">${listed.length}</span></h2><p>Update a customer's segment directly below.</p></div><span class="demo-tag">SAVED IN THIS BROWSER</span></div>
+      <div class="table-scroll"><table><thead><tr><th>CUSTOMER</th><th>COMPANY</th><th>EMAIL</th><th>SEGMENT</th><th>STATUS</th></tr></thead><tbody>${listed.length ? listed.map((customer, index) => `<tr><td>${customerName(customer, index)}</td><td>${escapeHtml(customer.company || "—")}</td><td>${escapeHtml(customer.email || "—")}</td><td><input class="segment-input" data-segment-customer="${escapeHtml(customer.id)}" value="${escapeHtml(customer.segment)}" placeholder="Enter a segment" aria-label="Segment for ${escapeHtml(customer.name)}" /></td><td><span class="status-tag">${escapeHtml(customer.status)}</span></td></tr>`).join("") : `<tr><td class="empty-state-cell" colspan="5">${unassignedOnly ? "All customers have a segment." : "No customer records yet."}</td></tr>`}</tbody></table></div>
+    </div>`);
+  document.querySelectorAll("[data-segment-customer]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const customer = customerById(input.dataset.segmentCustomer);
+      if (!customer) return;
+      const previousSegment = customer.segment;
+      customer.segment = input.value.trim();
+      if (!saveCustomers()) {
+        customer.segment = previousSegment;
+        input.value = previousSegment;
+      } else if (unassignedOnly && customer.segment) renderSegments(true);
+    });
+  });
+}
 
-on("assign-group", "click", () => {
-  const selected = [...document.querySelectorAll(".group-student-check:checked")].map((checkbox) => checkbox.value);
-  const className = document.getElementById("group-class").value;
-  const section = document.getElementById("group-section").value;
-  if (!selected.length || !className || !section) {
-    window.alert("Select at least one student, a class and a section before assigning.");
-    return;
-  }
-  students.forEach((student) => {
-    if (selected.includes(student.id)) {
-      student.className = className;
-      student.section = section;
+function renderFollowups() {
+  const listed = customers.filter((customer) => customer.nextFollowUp).sort((a, b) => a.nextFollowUp.localeCompare(b.nextFollowUp));
+  renderShell("followups", `
+    ${pageHeading("CUSTOMER ENGAGEMENT", "Follow-ups", "Schedule and track the next step with each customer.")}
+    <form class="content-card marks-form" id="followup-form"><div class="marks-form-fields">
+      <div class="form-field"><label for="followup-customer">Customer</label>${customerSelect("followup-customer")}</div>
+      <div class="form-field"><label for="followup-date">Follow-up date</label><input id="followup-date" type="date" min="${today}" required /></div>
+      <div class="form-field"><label for="followup-note">Next step</label><input id="followup-note" placeholder="e.g. Send updated proposal" /></div>
+    </div><div class="form-actions"><button class="primary-button" type="submit">Schedule follow-up →</button></div></form>
+    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Scheduled follow-ups</h2><p>Past-due and upcoming customer actions.</p></div></div>
+      <div class="table-scroll"><table><thead><tr><th>DATE</th><th>CUSTOMER</th><th>COMPANY</th><th>NEXT STEP</th><th>ACTION</th></tr></thead><tbody>${listed.length ? listed.map((customer) => `<tr><td>${displayDate(customer.nextFollowUp)}</td><td>${escapeHtml(customer.name)}</td><td>${escapeHtml(customer.company || "—")}</td><td>${escapeHtml(customer.followUpNote || "Follow up with customer")}</td><td><button class="row-action" type="button" data-complete-followup="${escapeHtml(customer.id)}">Mark done</button></td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="5">No follow-ups scheduled yet.</td></tr>'}</tbody></table></div></div>`);
+  document.getElementById("followup-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const customer = customerById(document.getElementById("followup-customer").value);
+    if (!customer) return;
+    const previousDate = customer.nextFollowUp;
+    const previousNote = customer.followUpNote;
+    customer.nextFollowUp = document.getElementById("followup-date").value;
+    customer.followUpNote = document.getElementById("followup-note").value.trim();
+    if (saveCustomers()) renderFollowups();
+    else {
+      customer.nextFollowUp = previousDate;
+      customer.followUpNote = previousNote;
     }
   });
-  saveStudents();
-  renderCurrentPage();
-});
+  document.querySelectorAll("[data-complete-followup]").forEach((button) => button.addEventListener("click", () => {
+    const customer = customerById(button.dataset.completeFollowup);
+    if (!customer) return;
+    const previousDate = customer.nextFollowUp;
+    const previousNote = customer.followUpNote;
+    customer.nextFollowUp = "";
+    customer.followUpNote = "";
+    if (saveCustomers()) renderFollowups();
+    else {
+      customer.nextFollowUp = previousDate;
+      customer.followUpNote = previousNote;
+    }
+  }));
+}
 
-on("ungrouped-table-body", "click", (event) => {
-  const action = event.target.closest(".go-group-student");
-  if (!action) return;
-  window.location.assign(`group-students.html?student=${encodeURIComponent(action.dataset.studentId)}`);
-});
-
-on("directory-table-body", "click", (event) => {
-  const unassign = event.target.closest(".unassign-student");
-  if (unassign) {
-    const student = students.find((record) => record.id === unassign.dataset.studentId);
-    if (!student) return;
-    student.className = "";
-    student.section = "";
-    saveStudents();
-    renderCurrentPage();
-    return;
-  }
-  const action = event.target.closest(".delete-student");
-  if (!action) return;
-  const student = students.find((record) => record.id === action.dataset.studentId);
-  if (!student || !window.confirm(`Remove ${student.name} and their attendance and marks from this device?`)) return;
-  students.splice(students.indexOf(student), 1);
-  saveStudents();
-  renderCurrentPage();
-});
-
-on("save-attendance", "click", () => {
-  const date = document.getElementById("attendance-date").value;
-  if (!date) {
-    window.alert("Choose an attendance date first.");
-    return;
-  }
-  const controls = [...document.querySelectorAll("#attendance-table-body [data-attendance-id]")];
-  if (!controls.length) {
-    window.alert("There are no students in the selected class and section.");
-    return;
-  }
-  const unmarked = controls.filter((control) => !control.value);
-  if (unmarked.length) {
-    window.alert(`Mark attendance for all students. ${unmarked.length} still need a status.`);
-    return;
-  }
-  controls.forEach((control) => {
-    const student = students.find((record) => record.id === control.dataset.attendanceId);
-    if (student) student.attendance[date] = control.value;
+function renderInteractions() {
+  const rows = [...interactions].sort((a, b) => b.date.localeCompare(a.date));
+  renderShell("interactions", `
+    ${pageHeading("CUSTOMER ENGAGEMENT", "Interactions", "Keep a clear history of calls, meetings, and customer conversations.")}
+    <form class="content-card marks-form" id="interaction-form"><div class="marks-form-fields">
+      <div class="form-field"><label for="interaction-customer">Customer</label>${customerSelect("interaction-customer")}</div>
+      <div class="form-field"><label for="interaction-date">Date</label><input id="interaction-date" type="date" value="${today}" required /></div>
+      <div class="form-field"><label for="interaction-type">Interaction type</label><select id="interaction-type"><option>Call</option><option>Email</option><option>Meeting</option><option>Other</option></select></div>
+      <div class="form-field form-field-wide"><label for="interaction-notes">Summary</label><textarea id="interaction-notes" rows="3" placeholder="What was discussed?"></textarea></div>
+    </div><div class="form-actions"><button class="primary-button" type="submit">Log interaction →</button></div></form>
+    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Recent interactions</h2><p>Latest activity across your customer accounts.</p></div></div>
+      <div class="table-scroll"><table><thead><tr><th>DATE</th><th>CUSTOMER</th><th>COMPANY</th><th>TYPE</th><th>SUMMARY</th></tr></thead><tbody>${rows.length ? rows.map((row) => `<tr><td>${displayDate(row.date)}</td><td>${escapeHtml(row.customerName)}</td><td>${escapeHtml(row.company || "—")}</td><td>${escapeHtml(row.type)}</td><td>${escapeHtml(row.notes || "—")}</td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="5">No interactions logged yet.</td></tr>'}</tbody></table></div></div>`);
+  document.getElementById("interaction-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const customer = customerById(document.getElementById("interaction-customer").value);
+    if (!customer) return;
+    const interaction = {
+      id: `INT-${Date.now()}`,
+      customerId: customer.id,
+      customerName: customer.name,
+      company: customer.company,
+      date: document.getElementById("interaction-date").value,
+      type: document.getElementById("interaction-type").value,
+      notes: document.getElementById("interaction-notes").value.trim(),
+    };
+    interactions.push(interaction);
+    if (saveList(INTERACTION_STORAGE_KEY, interactions, "customer interactions")) renderInteractions();
+    else interactions.pop();
   });
-  saveStudents();
-  renderCurrentPage();
-});
+}
 
-on("mark-all-present", "click", () => {
-  document.querySelectorAll("#attendance-table-body [data-attendance-id]").forEach((control) => { control.value = "Present"; });
-});
+function renderReports() {
+  const statuses = ["Prospective", "Active", "At risk", "Inactive"];
+  const segmentCounts = [...new Set(customers.map((customer) => customer.segment).filter(Boolean))].sort();
+  const recent = customers.filter((customer) => customer.added.slice(0, 7) === today.slice(0, 7)).length;
+  renderShell("reports", `
+    ${pageHeading("BUSINESS INSIGHTS", "Customer reports", "Review customer status, segments, and recent growth.")}
+    <div class="stats-grid">${statuses.map((status) => `<article class="stat-card"><div class="stat-top"><span>${status} customers</span><span class="stat-icon groups-icon">♧</span></div><div class="stat-number">${customers.filter((customer) => customer.status === status).length}</div><div class="stat-foot"><span>Customer relationship status</span></div></article>`).join("")}
+      <article class="stat-card"><div class="stat-top"><span>Added this month</span><span class="stat-icon reports-icon">＋</span></div><div class="stat-number">${recent}</div><div class="stat-foot"><span>New customer records</span></div></article></div>
+    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Customers by segment</h2><p>Customer distribution across your business categories.</p></div></div>
+      <div class="table-scroll"><table><thead><tr><th>SEGMENT</th><th>CUSTOMERS</th><th>ACTIVE</th><th>PROSPECTIVE</th></tr></thead><tbody>${segmentCounts.length ? segmentCounts.map((segment) => `<tr><td>${escapeHtml(segment)}</td><td>${customers.filter((customer) => customer.segment === segment).length}</td><td>${customers.filter((customer) => customer.segment === segment && customer.status === "Active").length}</td><td>${customers.filter((customer) => customer.segment === segment && customer.status === "Prospective").length}</td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="4">Assign segments to customers to see a breakdown.</td></tr>'}</tbody></table></div>
+    </div>`);
+}
 
-["attendance-date", "attendance-class", "attendance-section"].forEach((id) => {
-  on(id, "change", renderAttendance);
-});
-
-on("marks-form", "submit", (event) => {
-  event.preventDefault();
-  const exam = document.getElementById("exam-name").value.trim();
-  const subject = document.getElementById("exam-subject").value.trim();
-  const max = Number(document.getElementById("exam-max").value);
-  const className = document.getElementById("exam-class").value;
-  const records = [...document.querySelectorAll("#marks-entry-body [data-mark-student]")];
-  const entered = records.filter((input) => input.value !== "");
-  if (!records.length || !entered.length) {
-    window.alert("Choose a class and enter at least one student's score.");
-    return;
-  }
-  if (entered.some((input) => Number(input.value) > max || Number(input.value) < 0)) {
-    window.alert(`Scores must be between 0 and ${max}.`);
-    return;
-  }
-  entered.forEach((input) => {
-    const student = students.find((record) => record.id === input.dataset.markStudent);
-    if (!student) return;
-    const mark = { exam, subject, max, score: Number(input.value), date: today };
-    const existing = student.marks.findIndex((item) => item.exam === exam && item.subject === subject && item.date === today);
-    if (existing >= 0) student.marks[existing] = mark;
-    else student.marks.push(mark);
+function renderPlans() {
+  const rows = [...plans].sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+  renderShell("plans", `
+    ${pageHeading("CUSTOMER ENGAGEMENT", "Account plans", "Set a clear objective and next action for important customer relationships.")}
+    <form class="content-card student-form" id="plan-form"><div class="form-grid">
+      <div class="form-field"><label for="plan-customer">Customer <span>*</span></label>${customerSelect("plan-customer")}</div>
+      <div class="form-field"><label for="plan-objective">Account objective <span>*</span></label><input id="plan-objective" placeholder="e.g. Renew annual service agreement" required /></div>
+      <div class="form-field"><label for="plan-action">Next action</label><input id="plan-action" placeholder="e.g. Schedule quarterly review" /></div>
+      <div class="form-field"><label for="plan-date">Target date</label><input id="plan-date" type="date" /></div>
+    </div><div class="form-actions"><button class="primary-button" type="submit">Save account plan →</button></div></form>
+    <div class="content-card table-card"><div class="table-toolbar"><div class="table-title"><h2>Customer account plans</h2><p>Objectives and next steps for your customer accounts.</p></div></div>
+      <div class="table-scroll"><table><thead><tr><th>CUSTOMER</th><th>OBJECTIVE</th><th>NEXT ACTION</th><th>TARGET DATE</th></tr></thead><tbody>${rows.length ? rows.map((plan) => `<tr><td>${escapeHtml(plan.customerName)}</td><td>${escapeHtml(plan.objective)}</td><td>${escapeHtml(plan.action || "—")}</td><td>${displayDate(plan.dueDate)}</td></tr>`).join("") : '<tr><td class="empty-state-cell" colspan="4">No account plans created yet.</td></tr>'}</tbody></table></div></div>`);
+  document.getElementById("plan-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const customer = customerById(document.getElementById("plan-customer").value);
+    if (!customer) return;
+    const plan = {
+      id: `PLAN-${Date.now()}`,
+      customerId: customer.id,
+      customerName: customer.name,
+      objective: document.getElementById("plan-objective").value.trim(),
+      action: document.getElementById("plan-action").value.trim(),
+      dueDate: document.getElementById("plan-date").value,
+    };
+    plans.push(plan);
+    if (saveList(PLAN_STORAGE_KEY, plans, "customer account plans")) renderPlans();
+    else plans.pop();
   });
-  saveStudents();
-  renderCurrentPage();
-  event.currentTarget.reset();
-  document.getElementById("exam-max").value = "100";
-  renderMarksEntry();
-});
+}
 
-["exam-class", "exam-section", "exam-max"].forEach((id) => {
-  on(id, "change", renderMarksEntry);
-  on(id, "input", renderMarksEntry);
-});
-
-["directory-search", "directory-class", "directory-section"].forEach((id) => {
-  on(id, "input", renderDirectory);
-  on(id, "change", renderDirectory);
-});
-on("ungrouped-search", "input", renderGroupedAndUngrouped);
-on("report-section", "change", renderReport);
-
-on("export-students", "click", () => {
-  const columns = ["Student ID", "Name", "Email", "Phone", "Guardian", "Class", "Section", "Attendance %", "Average marks %"];
-  const rows = students.map((student) => [
-    student.id, student.name, student.email, student.phone, student.guardian,
-    student.className, student.section, attendanceStats(student).percent ?? "",
-    averageMark(student) === null ? "" : Math.round(averageMark(student)),
-  ]);
-  const csv = [columns, ...rows].map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+function exportCustomers() {
+  const fields = ["id", "name", "company", "email", "phone", "segment", "status", "notes", "added", "nextFollowUp"];
+  const rows = [fields, ...customers.map((customer) => fields.map((field) => customer[field] || ""))];
+  const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\r\n");
   const link = document.createElement("a");
   link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-  link.download = `campusly-students-${today}.csv`;
+  link.download = "customers.csv";
   link.click();
-  URL.revokeObjectURL(link.href);
-});
-
-const attendanceDate = document.getElementById("attendance-date");
-if (attendanceDate) attendanceDate.value = today;
-const goalplanJoinDate = document.getElementById("goalplan-join-date");
-if (goalplanJoinDate) goalplanJoinDate.value = today;
-updateGoalplanHorizon();
-updateGoalplanAllocation();
-
-const profileName = localStorage.getItem("campusly-profile-name") || "School Admin";
-const firstName = profileName.split(" ")[0];
-const profileNameElement = document.getElementById("profile-name");
-const profileAvatar = document.getElementById("profile-avatar");
-const topbarAvatar = document.getElementById("topbar-avatar");
-const ungroupedNavCount = document.getElementById("ungrouped-nav-count");
-if (profileNameElement) profileNameElement.textContent = profileName;
-if (profileAvatar) profileAvatar.textContent = firstName[0];
-if (topbarAvatar) topbarAvatar.textContent = firstName[0];
-if (ungroupedNavCount) ungroupedNavCount.textContent = students.filter((student) => !student.className).length;
-const welcomeName = document.getElementById("welcome-name");
-const greetingText = document.getElementById("greeting-text");
-if (welcomeName) welcomeName.textContent = firstName;
-if (greetingText) {
-  const hour = new Date().getHours();
-  greetingText.textContent = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  setTimeout(() => URL.revokeObjectURL(link.href), 0);
 }
 
-renderCurrentPage();
-if (document.body.dataset.page === "groups") {
-  const selectedStudent = new URLSearchParams(window.location.search).get("student");
-  const checkbox = [...document.querySelectorAll(".group-student-check")]
-    .find((item) => item.value === selectedStudent);
-  if (checkbox) checkbox.checked = true;
+function renderLogin() {
+  document.title = "Cliently — Business customer workspace";
+  document.getElementById("login-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    window.location.href = "overview.html";
+  });
 }
-if (document.body.dataset.page === "reports") {
-  const className = new URLSearchParams(window.location.search).get("class");
-  const classInput = document.querySelector(`input[name="report-class"][value="${className}"]`);
-  if (classInput) {
-    classInput.checked = true;
-    renderReport();
+
+function initializePage() {
+  if (document.getElementById("login-form")) {
+    renderLogin();
+    return;
   }
+  const page = document.body.dataset.page;
+  if (page === "overview") renderOverview();
+  else if (page === "add") renderAddCustomer();
+  else if (page === "directory") renderDirectory();
+  else if (page === "segments") renderSegments();
+  else if (page === "unassigned") renderSegments(true);
+  else if (page === "followups") renderFollowups();
+  else if (page === "interactions") renderInteractions();
+  else if (page === "reports") renderReports();
+  else if (page === "plans") renderPlans();
+
+  document.getElementById("customer-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = document.getElementById("customer-name").value.trim();
+    const customer = {
+      id: `CUS-${Date.now()}`,
+      name,
+      company: document.getElementById("customer-company").value.trim(),
+      email: document.getElementById("customer-email").value.trim(),
+      phone: document.getElementById("customer-phone").value.trim(),
+      segment: document.getElementById("customer-segment").value.trim(),
+      status: document.getElementById("customer-status").value,
+      notes: document.getElementById("customer-notes").value.trim(),
+      added: today,
+      nextFollowUp: "",
+    };
+    customers.unshift(customer);
+    if (saveCustomers()) window.location.href = "all-customers.html";
+    else customers.shift();
+  });
 }
+
+initializePage();
