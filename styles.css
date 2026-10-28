@@ -1309,3 +1309,59 @@ body[data-page="marks"] .nav-marks .nav-icon { color: #9be2c1; }
   .group-actions { align-items: flex-start; }
   .table-footer { gap: 10px; }
 }
+
+/* Login entrance */
+.login-scene {
+  position: relative;
+  display: flow-root;
+  width: min(100%, 430px);
+  margin: auto;
+  animation: login-arrive 1.05s cubic-bezier(.2, .78, .24, 1) both;
+}
+.login-card { animation: login-card-settle .75s .2s both; }
+.login-mascot { display: none; }
+
+@keyframes login-arrive {
+  0% { opacity: 0; transform: translateX(105vw); }
+  72% { opacity: 1; transform: translateX(-12px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes login-card-settle {
+  0% { transform: rotate(2deg) scale(.98); }
+  68% { transform: rotate(-.7deg) scale(1.005); }
+  100% { transform: rotate(0) scale(1); }
+}
+
+@keyframes mascot-step {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-4px) rotate(-2deg); }
+}
+
+@media (min-width: 1180px) {
+  .login-mascot {
+    position: absolute;
+    z-index: 1;
+    top: 8px;
+    left: -110px;
+    display: block;
+    width: 145px;
+    height: 116px;
+    overflow: visible;
+    transform-origin: 45px 100px;
+    animation: mascot-step .3s ease-in-out 3;
+    filter: drop-shadow(0 5px 5px rgba(20, 45, 80, .14));
+  }
+  .mascot-rope {
+    fill: none;
+    stroke: #c28a4b;
+    stroke-linecap: round;
+    stroke-width: 2;
+  }
+  .login-card { margin-top: 70px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-scene, .login-card, .login-mascot { animation: none; }
+  .login-scene, .login-card { opacity: 1; transform: none; }
+}
